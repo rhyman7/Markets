@@ -53,8 +53,12 @@ def _fetch_alpaca(ticker: str, start: date) -> pd.DataFrame:
 
     key, secret = os.environ["ALPACA_API_KEY"], os.environ["ALPACA_API_SECRET"]
     url = f"https://data.alpaca.markets/v2/stocks/{ticker}/bars"
-    params = {"timeframe": "1Day", "start": start.isoformat(), "adjustment": "all",
-              "feed": os.environ.get("ALPACA_FEED", "iex"), "limit": 10000}
+    # SIP = all US exchanges. The free plan serves full SIP history but refuses the most
+    # recent 15 minutes, so stop the request 16 minutes ago. (IEX alone is ~2-8% of
+    # volume and only goes back to mid-2020; checked 2026-11-10.)
+    end = (datetime.utcnow() - timedelta(minutes=16)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    params = {"timeframe": "1Day", "start": start.isoformat(), "end": end, "adjustment": "all",
+              "feed": os.environ.get("ALPACA_FEED", "sip"), "limit": 10000}
     headers = {"APCA-API-KEY-ID": key, "APCA-API-SECRET-KEY": secret}
     rows, token = [], None
     while True:
