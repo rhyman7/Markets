@@ -126,3 +126,25 @@ def test_no_edge_on_random_walks_textbook():
         stats = summarize(trades)
         assert stats["trades"] > 100, (mode, stats)
         assert abs(stats["expectancy_R"]) < 0.2, (mode, stats)
+
+
+def test_variant_i_settings_are_frozen():
+    from markets.strategies import STRATEGIES, FibTextbookI, TextbookParams
+    assert STRATEGIES["fib_textbook_i"] is FibTextbookI
+    assert FibTextbookI().p == TextbookParams(mode="pattern", require_rsi=True)
+
+
+def test_signal_log_appends_once(tmp_path):
+    import pandas as pd
+    from scan import log_signals
+    out = pd.DataFrame([
+        {"ticker": "AAA", "status": "TRIGGERED", "date": pd.Timestamp("2026-11-10").date(), "close": 10,
+         "entry": 10, "stop": 9, "t1": 11, "t2": 12, "risk_pct": 10, "notes": "x"},
+        {"ticker": "BBB", "status": "setting up", "date": pd.Timestamp("2026-11-10").date(), "close": 10,
+         "entry": 10, "stop": 9, "t1": 11, "t2": 12, "risk_pct": 10, "notes": "x"},
+    ])
+    log = tmp_path / "signals.csv"
+    log_signals(out, "fib_textbook_i", "universe", log)
+    log_signals(out, "fib_textbook_i", "universe", log)
+    df = pd.read_csv(log)
+    assert list(df["ticker"]) == ["AAA"]

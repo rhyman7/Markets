@@ -1,10 +1,19 @@
 name: Daily scan
 
 # Runs automatically after the US market close on weekdays, or on demand from the Actions tab.
+# Scans variant I (fib_textbook_i) on large caps and mid-caps, and appends every triggered
+# signal to journal/signals.csv so the forward test is recorded whether or not a trade is taken.
 on:
   schedule:
     - cron: "37 21 * * 1-5"   # 21:37 UTC = 4:37 PM EST / 5:37 PM EDT
   workflow_dispatch:
+
+permissions:
+  contents: write              # to commit journal/signals.csv
+
+concurrency:
+  group: daily-scan
+  cancel-in-progress: false
 
 jobs:
   scan:
@@ -24,12 +33,27 @@ jobs:
       - name: Scan
         run: |
           {
-            echo "## Fibonacci pullback scan ($(TZ=America/New_York date '+%a %Y-%m-%d %H:%M ET'))"
-            echo "Completed daily bars only. Not a recommendation to trade."
-            echo '```'
-            python scan.py 2>&1
-            echo '```'
+            echo "## Variant I scan ($(TZ=America/New_York date '+%a %Y-%m-%d %H:%M ET'))"
+            echo "Completed daily bars only. Paper trading test, not a recommendation to trade."
+            echo "A TRIGGERED signal means: buy at the next session's open (that's what the backtest does)."
+            for u in universe.txt universe_midcap.txt; do
+              echo "### $u"
+              echo '```'
+              python scan.py --strategy fib_textbook_i --universe "$u" --signal-log journal/signals.csv 2>&1
+              echo '```'
+            done
           } | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Commit new signals
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add journal/signals.csv 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "No new signals."
+          else
+            git commit -m "Signals for $(TZ=America/New_York date +%Y-%m-%d)"
+            git pull --rebase && git push
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: scan

@@ -131,3 +131,14 @@ class FibTextbook(Strategy):
             notes=f"swing {df.index[lo_idx].date()} -> {df.index[hi_idx].date()}, "
                   + (f"buy limit {limit:.2f}" if limit else "reversal candle in zone"),
         )
+
+
+class FibTextbookI(FibTextbook):
+    """Variant I under its own name so the scanner can run it: reversal candle in the
+    38.2-61.8% zone plus RSI < 40 during the pullback and rising on the signal bar.
+    Rules frozen 2026-11-10 after it beat the control out of sample (mid-caps).
+    Do not change these settings; test a new variant instead."""
+    name = "fib_textbook_i"
+
+    def __init__(self, params: TextbookParams | None = None):
+        super().__init__(params or TextbookParams(mode="pattern", require_rsi=True))

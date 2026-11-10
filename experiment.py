@@ -16,7 +16,7 @@ import pandas as pd
 from markets.backtest import simulate_ticker, summarize, trades_frame
 from markets.data.loader import load_bars, load_universe
 from scan import drop_unfinished_bar
-from markets.strategies import FibParams, FibPullback, FibTextbook, TextbookParams, TrendBaseline
+from markets.strategies import FibParams, FibPullback, FibTextbook, FibTextbookI, TextbookParams, TrendBaseline
 
 EXPERIMENTS = {
     # 2026-11-10: why does fib_pullback trail random entries in uptrends?
@@ -41,7 +41,7 @@ EXPERIMENTS = {
     # --universe universe_midcap.txt. Written down before running: I counts as
     # confirmed only if it beats F in BOTH periods here too.
     "fib_midcap": {
-        "I. reversal candle + RSI < 40 turning up": lambda: FibTextbook(TextbookParams(mode="pattern", require_rsi=True)),
+        "I. reversal candle + RSI < 40 turning up": lambda: FibTextbookI(),
         "F. random entries in uptrends (control)": lambda: TrendBaseline(),
     },
 }

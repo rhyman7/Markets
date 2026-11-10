@@ -11,7 +11,9 @@ Everything can run on GitHub's servers from the **Actions** tab:
 - **Backtest**: Actions → Backtest → Run workflow. It runs `fib_pullback` and the
   `trend_baseline` control and shows both on the run's summary page. Takes a few minutes.
 - **Daily scan**: runs automatically at 4:37 PM ET (5:37 PM in daylight time) on weekdays,
-  or on demand from Actions → Daily scan → Run workflow. Results appear on the run's summary page.
+  or on demand from Actions → Daily scan → Run workflow. It scans variant I (`fib_textbook_i`)
+  on `universe.txt` and `universe_midcap.txt`; results appear on the run's summary page.
+  Every triggered signal is appended to `journal/signals.csv` and committed automatically.
 
 Each run's CSV files can be downloaded under **Artifacts** at the bottom of its page.
 To use Alpaca instead of Yahoo, add repository secrets `DATA_PROVIDER` (`alpaca`),
@@ -46,6 +48,18 @@ because the entry rule depends on the daily close. Status meanings:
 - `pass (R:R)`: in the zone, but the reward isn't worth the risk.
 
 Results print and are saved to `output/scan_<strategy>_<date>.csv`.
+
+## Paper trading variant I
+
+`journal/signals.csv` is the forward test: every signal the daily scan fires, taken or not.
+Fill in the `taken` column (`y`/`n`, plus why if not). Trades you actually place go in
+`journal/trades.csv` as before. After a few months, compare the signals' results to the
+backtest (+0.22R per trade on mid-caps, +0.18R on large caps, before costs).
+Signals mean "buy at the next session's open"; the stop and targets are in the row.
+
+```bash
+python scan.py --strategy fib_textbook_i --universe universe_midcap.txt --signal-log journal/signals.csv
+```
 
 ## Backtesting
 

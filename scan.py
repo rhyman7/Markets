@@ -3,6 +3,8 @@
     python scan.py                       # fib_pullback on universe.txt
     python scan.py --tickers UNH CI EOG  # specific tickers
     python scan.py --include-today       # use today's unfinished bar (intraday)
+    python scan.py --strategy fib_textbook_i --universe universe_midcap.txt \
+        --signal-log journal/signals.csv  # also append triggered signals to a log
 
 By default an unfinished bar from today's session is dropped, so every result is
 based on completed daily candles. Results print as a table and save to output/.
@@ -28,16 +30,38 @@ def drop_unfinished_bar(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+SIGNAL_COLUMNS = ["date", "ticker", "strategy", "universe", "status", "close", "entry", "stop",
+                  "t1", "t2", "risk_pct", "notes", "taken"]
+
+
+def log_signals(out: pd.DataFrame, strategy: str, universe: str, path: Path) -> None:
+    """Append new entry signals to a CSV. Every signal is kept, taken or not, so the
+    forward test can be compared to the backtest without hindsight. The `taken` column
+    is left blank for Ryan to fill in. Re-running a scan on the same bar adds nothing."""
+    new = out[out["status"].isin(["TRIGGERED", "BUY LIMIT"])].copy()
+    new["strategy"], new["universe"], new["taken"] = strategy, universe, ""
+    new["date"] = new["date"].astype(str)
+    new = new[SIGNAL_COLUMNS]
+    old = pd.read_csv(path, dtype=str) if path.exists() else pd.DataFrame(columns=SIGNAL_COLUMNS)
+    seen = set(zip(old["date"], old["ticker"], old["strategy"]))
+    new = new[[k not in seen for k in zip(new["date"], new["ticker"], new["strategy"])]]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    pd.concat([old, new.astype(str)], ignore_index=True).to_csv(path, index=False)
+    print(f"Logged {len(new)} new signal(s) to {path}")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--strategy", default="fib_pullback", choices=STRATEGIES)
     ap.add_argument("--tickers", nargs="*")
     ap.add_argument("--include-today", action="store_true")
     ap.add_argument("--refresh", action="store_true", help="ignore today's cache")
+    ap.add_argument("--universe", help="ticker file (default universe.txt)")
+    ap.add_argument("--signal-log", help="append TRIGGERED/BUY LIMIT rows to this CSV")
     args = ap.parse_args()
 
     strategy = STRATEGIES[args.strategy]()
-    tickers = [t.upper() for t in args.tickers] if args.tickers else load_universe()
+    tickers = [t.upper() for t in args.tickers] if args.tickers else load_universe(args.universe or None)
     rows, failed = [], []
     for t in tickers:
         try:
@@ -73,9 +97,12 @@ def main() -> None:
         with pd.option_context("display.width", 200, "display.max_columns", None):
             print(out.drop(columns="notes").to_string(index=False))
         Path("output").mkdir(exist_ok=True)
-        path = Path("output") / f"scan_{args.strategy}_{out['date'].max()}.csv"
+        tag = Path(args.universe).stem if args.universe else "universe"
+        path = Path("output") / f"scan_{args.strategy}_{tag}_{out['date'].max()}.csv"
         out.to_csv(path, index=False)
         print(f"\nSaved {path}")
+        if args.signal_log:
+            log_signals(out, args.strategy, tag, Path(args.signal_log))
     if failed:
         print(f"\nCould not load {len(failed)}: {', '.join(failed)}")
 
