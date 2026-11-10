@@ -4,7 +4,21 @@ Rule-based stock strategy research: scan for setups, backtest the rules, journal
 
 Education and research only, not financial advice.
 
-## Setup
+## Running on GitHub (no install needed)
+
+Everything can run on GitHub's servers from the **Actions** tab:
+
+- **Backtest**: Actions → Backtest → Run workflow. It runs `fib_pullback` and the
+  `trend_baseline` control and shows both on the run's summary page. Takes a few minutes.
+- **Daily scan**: runs automatically at 4:37 PM ET (5:37 PM in daylight time) on weekdays,
+  or on demand from Actions → Daily scan → Run workflow. Results appear on the run's summary page.
+
+Each run's CSV files can be downloaded under **Artifacts** at the bottom of its page.
+To use Alpaca instead of Yahoo, add repository secrets `DATA_PROVIDER` (`alpaca`),
+`ALPACA_API_KEY` and `ALPACA_API_SECRET` under Settings → Secrets and variables → Actions.
+
+## Running locally
+
 
 ```bash
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
