@@ -17,6 +17,7 @@ from markets.backtest import simulate_ticker, summarize, trades_frame
 from markets.data.loader import load_bars, load_universe
 from scan import drop_unfinished_bar
 from markets.strategies import FibParams, FibPullback, FibTextbook, FibTextbookI, TextbookParams, TrendBaseline
+from markets.strategies import library as lib
 
 EXPERIMENTS = {
     # 2026-11-10: why does fib_pullback trail random entries in uptrends?
@@ -45,6 +46,82 @@ EXPERIMENTS = {
         "F. random entries in uptrends (control)": lambda: TrendBaseline(),
     },
 }
+
+
+# 2026-11-10: FibAlgo library screen. Every daily-testable ICT/Wyckoff tool with the shared
+# template in markets/strategies/library.py, each against its own matched random control.
+# Pass rules were written in research/log.md BEFORE the first run.
+LIBRARY_EXPERIMENTS = {
+    "fibalgo_screen": [t.name for t in lib.ALL_TOOLS],
+    # Filled in from the screen's passes, rules unchanged, run with --universe universe_smallcap.txt.
+    "fibalgo_holdout": [],
+}
+SCREEN_PASS = dict(min_trades=100, min_gap=0.10, min_z=2.0)      # plus gap > 0 in both periods
+HOLDOUT_PASS = dict(min_trades=100, min_gap=0.0, min_z=1.5)      # plus gap > 0 in both periods
+
+
+def _r(trades):
+    return np.array([t.r for t in trades if not t.exit_reason.startswith("open")])
+
+
+def _mean_se(r):
+    return (float(r.mean()), float(r.std(ddof=1) / np.sqrt(len(r)))) if len(r) > 1 else (np.nan, np.nan)
+
+
+def run_library(name, data, split, benchmark):
+    rules = HOLDOUT_PASS if name == "fibalgo_holdout" else SCREEN_PASS
+    tools = [t for t in lib.ALL_TOOLS if t.name in LIBRARY_EXPERIMENTS[name]]
+    if not tools:
+        print("No tools listed for this experiment yet.")
+        return
+    cut = pd.Timestamp(split)
+    rows, years = [], {}
+
+    def make(tool):
+        st = tool()
+        if tool is lib.ComparativeStrength:
+            st.benchmark = benchmark
+        return st
+
+    for tool in tools:
+        trades = []
+        for t, df in data.items():
+            trades += simulate_ticker(make(tool), t, df)
+        ctl_proto = lib.matched_control(tool, trades)
+        ctl = []
+        for t, df in data.items():
+            ctl += simulate_ticker(lib.matched_control(tool, trades), t, df)
+        out = {"tool": tool.name, "ctx": tool.context}
+        for label, f in (("all", lambda x: True), ("pre", lambda x: x.entry_date < cut), ("post", lambda x: x.entry_date >= cut)):
+            r, rc = _r([x for x in trades if f(x)]), _r([x for x in ctl if f(x)])
+            m, se = _mean_se(r)
+            mc, sec = _mean_se(rc)
+            out[f"{label}_n"] = len(r)
+            out[f"{label}_expR"] = round(m, 3)
+            out[f"{label}_ctl"] = round(mc, 3)
+            out[f"{label}_gap"] = round(m - mc, 3)
+            if label == "all":
+                out["ctl_n"] = len(rc)
+                out["z"] = round((m - mc) / np.sqrt(se ** 2 + sec ** 2), 2) if len(r) > 1 else np.nan
+        out["risk_atr"] = ctl_proto.stop_atr
+        out["limit_atr"] = ctl_proto.limit_atr
+        out["PASS"] = bool(out["all_n"] >= rules["min_trades"] and out["all_gap"] >= rules["min_gap"]
+                           and out["z"] >= rules["min_z"] and out["pre_gap"] > 0 and out["post_gap"] > 0)
+        rows.append(out)
+        for part, label in ((trades, "tool"), (ctl, "ctl")):
+            df = trades_frame([x for x in part if not x.exit_reason.startswith("open")])
+            if not df.empty:
+                years[(tool.name, label)] = df.groupby(pd.to_datetime(df["entry_date"]).dt.year)["r"].mean()
+        print(f"  done {tool.name}: {out['all_n']} trades", flush=True)
+
+    tab = pd.DataFrame(rows)
+    by_year = pd.DataFrame({k[0]: years[(k[0], "tool")] - years.get((k[0], "ctl"), np.nan)
+                            for k in years if k[1] == "tool"}).T.round(2)
+    with pd.option_context("display.width", 300, "display.max_columns", None, "display.max_rows", None):
+        print(f"\nPass rules: {rules} and gap > 0 in both periods. gap = tool expR - matched control expR.")
+        print(tab.to_string(index=False))
+        print("\nGap vs control by entry year (R):\n" + by_year.to_string())
+    print(f"\nPASSED: {', '.join(tab.loc[tab.PASS, 'tool']) or 'none'}  ({int(tab.PASS.sum())} of {len(tab)} tested)")
 
 
 def row(name, trades, split):
@@ -91,7 +168,7 @@ def breakdown(trades):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("name", choices=EXPERIMENTS)
+    ap.add_argument("name", choices=list(EXPERIMENTS) + list(LIBRARY_EXPERIMENTS))
     ap.add_argument("--years", type=float, default=10)
     ap.add_argument("--split", default="2021-01-01")
     ap.add_argument("--tickers", nargs="*")
@@ -108,6 +185,12 @@ def main():
         except Exception as e:
             print(f"skip {t}: {type(e).__name__}")
     print(f"{args.name}: {len(data)} tickers, {args.years:g} years, split {args.split}\n")
+
+    if args.name in LIBRARY_EXPERIMENTS:
+        bench = drop_unfinished_bar(load_bars("SPY", years=args.years))["close"]
+        print(f"Data through {max(df.index[-1] for df in data.values()).date()}; SPY benchmark through {bench.index[-1].date()}")
+        run_library(args.name, data, args.split, bench)
+        return
 
     rows, first, results = [], None, []
     for name, make in EXPERIMENTS[args.name].items():

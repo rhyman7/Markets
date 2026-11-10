@@ -4,9 +4,12 @@ Trade management (shared by all strategies unless they override it later):
 - Signal on bar i's close -> enter at bar i+1's open. Skip if it opens at/below the stop.
 - Limit orders (Setup.limit): fill on bar i+1 only if its low reaches the limit, at the
   lower of the open and the limit. Unfilled orders are re-evaluated on the next bar.
+  If the fill is below the open, that bar's high may predate the fill, so on that bar a
+  target only counts if the close reaches it.
 - R = entry - stop, using the actual entry price.
 - Half the position exits at the first target; the stop then moves to breakeven.
-- The rest exits at the last target, the stop, or the close after `max_hold` bars.
+- The rest exits at the last target, the stop, or the close after `max_hold` bars
+  (40 by default; a strategy can set its own `max_hold` attribute).
 - A gap through the stop exits at the open (can lose more than 1R).
 - If a bar touches both the stop and a target, assume the stop hit first (conservative).
 - One position per ticker at a time. Positions across tickers are independent:
@@ -37,9 +40,12 @@ class Trade:
     bars_held: int = 0
     risk_pct: float = 0.0      # (entry - stop) / entry
     depth: float = float("nan")  # retracement depth at the signal, if the strategy reports it
+    risk_atr: float = float("nan")  # planned risk in ATR units, if the strategy reports it
+    limit_gap_atr: float = float("nan")  # (signal close - limit) / ATR for limit entries
 
 
 def simulate_ticker(strategy: Strategy, ticker: str, df: pd.DataFrame, max_hold: int = 40) -> list[Trade]:
+    max_hold = getattr(strategy, "max_hold", None) or max_hold   # a strategy may set its own
     df = strategy.prepare(df)
     o, h, l, c = (df[k].to_numpy() for k in ("open", "high", "low", "close"))
     trades: list[Trade] = []
@@ -63,8 +69,14 @@ def simulate_ticker(strategy: Strategy, ticker: str, df: pd.DataFrame, max_hold:
         risk = entry - s.stop
         t1, t2 = s.targets[0], s.targets[-1]
         tr = Trade(ticker, df.index[i], df.index[i + 1], float(entry), s.stop, t1, t2,
-                   risk_pct=float(risk / entry), depth=float(s.levels.get("depth", float("nan"))))
+                   risk_pct=float(risk / entry), depth=float(s.levels.get("depth", float("nan"))),
+                   risk_atr=float(s.levels.get("risk_atr", float("nan"))),
+                   limit_gap_atr=float(s.levels.get("limit_gap_atr", float("nan"))))
         stop, half_done, realized = s.stop, False, 0.0
+        # A limit filled below the open: the bar's high may have come before the fill. After
+        # the fill the path ends at the close, so on that bar a target only counts if the close
+        # reached it (fixed 2026-11-10; before, any high counted, which flattered limit entries).
+        fill_bar = i + 1 if (s.limit is not None and entry < o[i + 1]) else -1
         j = i + 1
         while True:
             if o[j] <= stop and j > i + 1:            # gap through stop
@@ -73,10 +85,10 @@ def simulate_ticker(strategy: Strategy, ticker: str, df: pd.DataFrame, max_hold:
                 px, why = stop, "stop" if not half_done else "breakeven"
             else:
                 px = None
-            if px is None and not half_done and h[j] >= t1:
+            if px is None and not half_done and (h[j] if j != fill_bar else c[j]) >= t1:
                 realized += 0.5 * (t1 - entry) / risk
                 half_done, stop = True, max(stop, entry)
-            if px is None and half_done and h[j] >= t2:
+            if px is None and half_done and (h[j] if j != fill_bar else c[j]) >= t2:
                 px, why = t2, "target 2"
             if px is None and j - (i + 1) + 1 >= max_hold:
                 px, why = c[j], "time"

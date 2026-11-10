@@ -90,6 +90,18 @@ How to read a result honestly:
 
 The exact trade-management rules are documented at the top of `markets/backtest.py`.
 
+## FibAlgo library screen (ICT and Wyckoff tools)
+
+`markets/strategies/library.py` turns 22 of the 28 FibAlgo library pages into 25 long-only
+daily rules. All of them use one shared trade template (stop at the tool's structure level,
++2R target, 20-bar time stop). Each is compared to its own matched random control, with the
+same filter, stop size and entry type. The plan and pass rules are in `research/log.md`.
+
+- Screen: Actions → Experiment → name `fibalgo_screen`, universe `universe.txt`.
+- Holdout: Actions → Build universe (once, creates `universe_smallcap.txt`), then list the
+  screen's passes in `LIBRARY_EXPERIMENTS["fibalgo_holdout"]` in `experiment.py` and run
+  Experiment → `fibalgo_holdout` with universe `universe_smallcap.txt`.
+
 ## Layout
 
 ```

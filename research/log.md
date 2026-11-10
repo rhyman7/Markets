@@ -2,6 +2,55 @@
 
 Newest first. Record every experiment, including the ones that didn't work.
 
+## 2026-11-10 — FibAlgo library screen: plan (written before any run on real data)
+
+Request: test every tool on the 28 FibAlgo ICT/Wyckoff library pages. Reviewed all 28.
+**None of them gives entry, stop or target rules or any backtest evidence**; each says the
+indicator "does not generate buy/sell signals". So this tests my mechanical reading of each
+concept with one shared trade template, not FibAlgo's indicators themselves.
+
+**Not testable on daily stock bars (6):** killzones, silver bullet, macro times, power of 3,
+midnight open (all need intraday bars), SMT divergence (needs a correlated pair like ES/NQ).
+Revisit only if minute data is added.
+
+**Tested (22 pages → 25 rules, long side only; the backtester can't short):** order blocks,
+FVG, volume imbalance, displacement, unicorn, premium/discount OTE, dealing range, IPDA range,
+market structure (CHoCH and BOS as two rules), liquidity sweep, key-level sweep (prior
+week/month low), NWOG, market maker buy model, standard deviation (2R exit and SD-target exit
+as two rules), Wyckoff accumulation (SC → spring → SOS), spring + test, VSA (stopping volume
+and no supply as two rules), price cycle (markup + pullback to 50 EMA), selling climax + AR,
+SOS → LPS, comparative strength (bullish divergence vs SPY), re-accumulation breakout.
+Exact rules: `markets/strategies/library.py` docstrings.
+
+**Shared template (no per-tool tuning):** close ≥ $10, 50-day volume ≥ 1M. Zone tools: buy
+limit at the zone's 50% level for 20 bars, one attempt per zone. Event tools: buy the next
+open. Stop = the tool's structure level − 0.1 ATR, risk floored at 0.5 ATR, skip if > 5 ATR.
+Exit all at +2R, the stop, or after 20 bars. "Up" tools also need the control's uptrend
+filter; reversal/range tools don't.
+
+**Control (new, per tool):** random entries with the same filter, context and exits, and the
+tool's median risk in ATR. For zone tools, the control also uses a one-bar buy limit at the
+tool's median distance below the close. This matters: with tight stops on daily bars the
+engine's conservative rules (stop before target on the same bar) cost limit entries about
+0.1–0.15R on driftless data. A matched control cancels that. Check on driftless synthetic
+data (120 tickers × 10 years): tool − control within ±2.2 SE for all 25; 0 of 25 passed.
+
+**Engine fix found while building this:** on the bar where a buy limit filled below the open,
+the backtester counted the bar's high toward the target, though that high may have come
+before the fill. Now the target only counts on that bar if the close reached it. This
+affects only limit-entry variants (fib_textbook G and J from earlier today), which were
+slightly flattered. Variant I uses market entries and is unaffected.
+
+**Pass rules, screen on large caps (universe.txt):** ≥ 100 trades, gap vs its control
+≥ +0.10R overall with z ≥ 2.0, and gap > 0 both before and after 2021.
+With 25 rules tested, expect about 0–1 to pass by luck alone (one-sided p ≈ 0.02 each).
+**Holdout:** every passing rule, unchanged, on S&P SmallCap 600 stocks not in either existing
+universe (universe_smallcap.txt). Confirmed only with ≥ 100 trades, gap > 0 in both periods,
+and z ≥ 1.5 overall. Nothing gets paper traded unless it is confirmed on the holdout.
+
+Known biases as before: survivorship (today's lists for all history), no costs or slippage
+(hurts tight-stop tools most, since costs are a bigger share of a small R).
+
 ## 2026-11-10 — Variant I on mid-caps with Alpaca data (data-source check)
 
 Purpose: before switching from Yahoo to Alpaca, confirm the mid-cap result doesn't depend
