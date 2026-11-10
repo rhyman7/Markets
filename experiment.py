@@ -15,6 +15,7 @@ import pandas as pd
 
 from markets.backtest import simulate_ticker, summarize, trades_frame
 from markets.data.loader import load_bars, load_universe
+from scan import drop_unfinished_bar
 from markets.strategies import FibParams, FibPullback, FibTextbook, TextbookParams, TrendBaseline
 
 EXPERIMENTS = {
@@ -61,6 +62,21 @@ def row(name, trades, split):
     return out
 
 
+def by_year(results):
+    """Trades and expectancy per entry year, every variant side by side."""
+    cols = {}
+    for name, trades in results:
+        df = trades_frame([t for t in trades if not t.exit_reason.startswith("open")])
+        if df.empty:
+            continue
+        g = df.groupby(pd.to_datetime(df["entry_date"]).dt.year)["r"]
+        key = name.split(".")[0]
+        cols[(key, "n")] = g.count()
+        cols[(key, "expR")] = g.mean().round(3)
+    if cols:
+        print("\nBy entry year (closed trades):\n" + pd.DataFrame(cols).to_string())
+
+
 def breakdown(trades):
     df = trades_frame([t for t in trades if not t.exit_reason.startswith("open")])
     if df.empty:
@@ -86,22 +102,24 @@ def main():
     data = {}
     for t in tickers:
         try:
-            df = load_bars(t, years=args.years)
+            df = drop_unfinished_bar(load_bars(t, years=args.years))
             if len(df) > 250:
                 data[t] = df
         except Exception as e:
             print(f"skip {t}: {type(e).__name__}")
     print(f"{args.name}: {len(data)} tickers, {args.years:g} years, split {args.split}\n")
 
-    rows, first = [], None
+    rows, first, results = [], None, []
     for name, make in EXPERIMENTS[args.name].items():
         trades = []
         for t, df in data.items():
             trades += simulate_ticker(make(), t, df)
         rows.append(row(name, trades, args.split))
+        results.append((name, trades))
         first = first or trades
     with pd.option_context("display.width", 250, "display.max_columns", None):
         print(pd.DataFrame(rows).to_string(index=False))
+        by_year(results)
     print("\nBreakdown of the first variant:")
     breakdown(first)
 
