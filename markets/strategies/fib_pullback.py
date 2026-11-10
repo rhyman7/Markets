@@ -39,6 +39,13 @@ class FibParams:
     stop_buffer: float = 0.005
     extension: float = 1.272
     min_rr: float = 2.0
+    # Variants used by experiments. Defaults are the rules above.
+    require_trigger: bool = True     # False: enter on any close inside the zone
+    stop_mode: str = "fib"           # "fib" or "pct" (stop_pct below entry)
+    stop_pct: float = 0.05
+    target_mode: str = "fib"         # "fib" or "pct" (t1_pct / t2_pct above entry)
+    t1_pct: float = 0.05
+    t2_pct: float = 0.10
 
 
 class FibPullback(Strategy):
@@ -91,9 +98,13 @@ class FibPullback(Strategy):
         deeper = next((r for r in RETRACEMENTS if r > max_depth + 0.005), RETRACEMENTS[-1])
         stop = level(deeper) * (1 - p.stop_buffer)
         trigger = h[i - 1]
-        triggered = px > trigger
+        triggered = px > trigger or not p.require_trigger
         entry = px if triggered else trigger
         t1, t2 = swing_high, swing_low + p.extension * rng
+        if p.stop_mode == "pct":
+            stop = entry * (1 - p.stop_pct)
+        if p.target_mode == "pct":
+            t1, t2 = entry * (1 + p.t1_pct), entry * (1 + p.t2_pct)
 
         s = Setup(
             ticker=ticker, date=df.index[i], triggered=triggered, qualifies=False,

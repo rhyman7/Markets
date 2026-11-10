@@ -1,0 +1,40 @@
+name: Experiment
+
+# Actions -> Experiment -> Run workflow. Compares strategy variants defined in experiment.py.
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: "Experiment name from experiment.py"
+        default: "fib_diagnostics"
+      years:
+        description: "Years of history"
+        default: "10"
+      split:
+        description: "Split date for before/after comparison"
+        default: "2021-01-01"
+
+jobs:
+  experiment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      DATA_PROVIDER: ${{ secrets.DATA_PROVIDER }}
+      ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+      ALPACA_API_SECRET: ${{ secrets.ALPACA_API_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python -m pytest -q
+      - name: Run experiment
+        run: |
+          {
+            echo "## Experiment: ${{ inputs.name }} ($(date -u +%Y-%m-%d))"
+            echo '```'
+            python experiment.py "${{ inputs.name }}" --years ${{ inputs.years }} --split ${{ inputs.split }} 2>&1
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"

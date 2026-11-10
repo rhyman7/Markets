@@ -33,6 +33,8 @@ class Trade:
     exit_reason: str = ""
     r: float = 0.0
     bars_held: int = 0
+    risk_pct: float = 0.0      # (entry - stop) / entry
+    depth: float = float("nan")  # retracement depth at the signal, if the strategy reports it
 
 
 def simulate_ticker(strategy: Strategy, ticker: str, df: pd.DataFrame, max_hold: int = 40) -> list[Trade]:
@@ -52,7 +54,8 @@ def simulate_ticker(strategy: Strategy, ticker: str, df: pd.DataFrame, max_hold:
             continue
         risk = entry - s.stop
         t1, t2 = s.targets[0], s.targets[-1]
-        tr = Trade(ticker, df.index[i], df.index[i + 1], float(entry), s.stop, t1, t2)
+        tr = Trade(ticker, df.index[i], df.index[i + 1], float(entry), s.stop, t1, t2,
+                   risk_pct=float(risk / entry), depth=float(s.levels.get("depth", float("nan"))))
         stop, half_done, realized = s.stop, False, 0.0
         j = i + 1
         while True:
