@@ -2,6 +2,34 @@
 
 Newest first. Record every experiment, including the ones that didn't work.
 
+## 2026-11-10 — Variant I on mid-caps with Alpaca data (data-source check)
+
+Purpose: before switching from Yahoo to Alpaca, confirm the mid-cap result doesn't depend
+on the data source. Same rules, same universe. Alpaca free plan, SIP (all-exchange) feed.
+A separate check (run 42871829490) found Alpaca's adjusted closes match Yahoo to a median
+0.002% on 5 tickers since 2016; its volume runs ~6% higher (likely includes extended hours),
+so slightly more stocks pass the volume filter. MOG-A failed (symbol format, now fixed).
+Run: https://github.com/rhyman7/Markets/actions/runs/42872327399
+
+| Variant | Trades | Exp. R | 2016–20 (trades) | 2021–26 (trades) | Profit factor | Max DD |
+|---|---|---|---|---|---|---|
+| I (Alpaca) | 427 | +0.189 | +0.317 (103) | +0.148 (324) | 1.47 | 20R |
+| F control (Alpaca) | 4,203 | +0.026 | +0.164 (1,132) | −0.025 (3,071) | 1.05 | 135R |
+| I (Yahoo, earlier today) | 396 | +0.219 | +0.396 (90) | +0.167 (306) | 1.57 | 19R |
+| F control (Yahoo) | 3,934 | +0.029 | +0.162 (1,013) | −0.017 (2,921) | 1.06 | 100R |
+
+By year (I vs control, Alpaca): 2017 +1.28/+0.48, 2018 +0.04/−0.05, 2019 +0.40/+0.22,
+2020 +0.31/+0.19, 2021 +0.29/−0.03, 2022 +0.05/−0.18, 2023 +0.10/+0.02,
+2024 +0.47/+0.09, 2025 +0.05/−0.02, 2026 −0.12/−0.10.
+
+Findings:
+- **Same conclusion on both sources.** I beats the control in both periods; gap +0.16R
+  overall (Yahoo: +0.19R). I is ahead in 9 of 10 years; 2026 is a near tie, slightly behind.
+- The gap is a little smaller on Alpaca. The difference between sources (~0.03R) is well
+  inside the noise, but it's a reminder that the exact figures aren't precise.
+
+Decision: Alpaca is now the default data source on GitHub (sturdier than Yahoo, full volume).
+
 ## 2026-11-10 — Variant I vs control by year (mid-caps)
 
 Rerun of fib_midcap with a by-year table for both variants and today's unfinished bar

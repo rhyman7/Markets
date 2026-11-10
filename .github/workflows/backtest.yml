@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
-      DATA_PROVIDER: ${{ secrets.DATA_PROVIDER }}
+      DATA_PROVIDER: ${{ secrets.DATA_PROVIDER || 'alpaca' }}
       ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
       ALPACA_API_SECRET: ${{ secrets.ALPACA_API_SECRET }}
     steps:

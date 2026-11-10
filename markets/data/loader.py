@@ -53,7 +53,7 @@ def _fetch_alpaca(ticker: str, start: date) -> pd.DataFrame:
     import requests
 
     key, secret = os.environ["ALPACA_API_KEY"], os.environ["ALPACA_API_SECRET"]
-    url = f"https://data.alpaca.markets/v2/stocks/{ticker}/bars"
+    url = f"https://data.alpaca.markets/v2/stocks/{ticker.replace('-', '.')}/bars"
     # SIP = all US exchanges. The free plan serves full SIP history but refuses the most
     # recent 15 minutes, so stop the request 16 minutes ago. (IEX alone is ~2-8% of
     # volume and only goes back to mid-2020; checked 2026-11-10.)
@@ -93,7 +93,7 @@ def load_bars(ticker: str, years: float = 3, refresh: bool = False) -> pd.DataFr
         if modified == date.today():
             return pd.read_csv(path, index_col=0, parse_dates=True)
     start = date.today() - timedelta(days=int(365 * years) + 10)
-    provider = os.environ.get("DATA_PROVIDER", "yfinance").lower()
+    provider = (os.environ.get("DATA_PROVIDER") or "yfinance").lower()
     fetch = _fetch_alpaca if provider == "alpaca" else _fetch_yfinance
     df = fetch(ticker.upper(), start).dropna()
     if not df.empty:

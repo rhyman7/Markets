@@ -17,7 +17,7 @@ on:
         description: "Ticker file"
         default: "universe.txt"
       provider:
-        description: "Data source: blank = repo default (Yahoo unless DATA_PROVIDER secret is set), or alpaca / yfinance"
+        description: "Data source: blank = alpaca (or the DATA_PROVIDER secret if set); yfinance to use Yahoo"
         default: ""
 
 jobs:
@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
-      DATA_PROVIDER: ${{ inputs.provider || secrets.DATA_PROVIDER }}
+      DATA_PROVIDER: ${{ inputs.provider || secrets.DATA_PROVIDER || 'alpaca' }}
       ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
       ALPACA_API_SECRET: ${{ secrets.ALPACA_API_SECRET }}
     steps:

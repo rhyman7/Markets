@@ -16,8 +16,9 @@ Everything can run on GitHub's servers from the **Actions** tab:
   Every triggered signal is appended to `journal/signals.csv` and committed automatically.
 
 Each run's CSV files can be downloaded under **Artifacts** at the bottom of its page.
-To use Alpaca instead of Yahoo, add repository secrets `DATA_PROVIDER` (`alpaca`),
-`ALPACA_API_KEY` and `ALPACA_API_SECRET` under Settings → Secrets and variables → Actions.
+On GitHub, data comes from Alpaca's free plan (full-market SIP feed, history since 2016),
+using the `ALPACA_API_KEY` and `ALPACA_API_SECRET` repository secrets. To force Yahoo,
+set a `DATA_PROVIDER` secret to `yfinance`, or pick `yfinance` when running an experiment.
 
 ## Running locally
 
@@ -54,7 +55,8 @@ Results print and are saved to `output/scan_<strategy>_<date>.csv`.
 `journal/signals.csv` is the forward test: every signal the daily scan fires, taken or not.
 Fill in the `taken` column (`y`/`n`, plus why if not). Trades you actually place go in
 `journal/trades.csv` as before. After a few months, compare the signals' results to the
-backtest (+0.22R per trade on mid-caps, +0.18R on large caps, before costs).
+backtest (about +0.19R per trade on mid-caps with Alpaca data, +0.22R with Yahoo;
++0.18R on large caps; all before costs).
 Signals mean "buy at the next session's open"; the stop and targets are in the row.
 
 ```bash
