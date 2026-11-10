@@ -13,6 +13,9 @@ on:
       split:
         description: "Split date for before/after comparison"
         default: "2021-01-01"
+      universe:
+        description: "Ticker file"
+        default: "universe.txt"
 
 jobs:
   experiment:
@@ -35,6 +38,6 @@ jobs:
           {
             echo "## Experiment: ${{ inputs.name }} ($(date -u +%Y-%m-%d))"
             echo '```'
-            python experiment.py "${{ inputs.name }}" --years ${{ inputs.years }} --split ${{ inputs.split }} 2>&1
+            python experiment.py "${{ inputs.name }}" --years ${{ inputs.years }} --split ${{ inputs.split }} --universe "${{ inputs.universe }}" 2>&1
             echo '```'
           } | tee -a "$GITHUB_STEP_SUMMARY"

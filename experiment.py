@@ -36,6 +36,13 @@ EXPERIMENTS = {
         "J. G + 50-day SMA in the zone": lambda: FibTextbook(TextbookParams(mode="limit", require_ma=True)),
         "F. random entries in uptrends (control)": lambda: TrendBaseline(),
     },
+    # 2026-11-10: out-of-sample check of variant I. Rules unchanged; run with
+    # --universe universe_midcap.txt. Written down before running: I counts as
+    # confirmed only if it beats F in BOTH periods here too.
+    "fib_midcap": {
+        "I. reversal candle + RSI < 40 turning up": lambda: FibTextbook(TextbookParams(mode="pattern", require_rsi=True)),
+        "F. random entries in uptrends (control)": lambda: TrendBaseline(),
+    },
 }
 
 
@@ -72,9 +79,10 @@ def main():
     ap.add_argument("--years", type=float, default=10)
     ap.add_argument("--split", default="2021-01-01")
     ap.add_argument("--tickers", nargs="*")
+    ap.add_argument("--universe", help="ticker file (default universe.txt)")
     args = ap.parse_args()
 
-    tickers = [t.upper() for t in args.tickers] if args.tickers else load_universe()
+    tickers = [t.upper() for t in args.tickers] if args.tickers else load_universe(args.universe or None)
     data = {}
     for t in tickers:
         try:
