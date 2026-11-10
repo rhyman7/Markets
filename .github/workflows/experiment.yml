@@ -16,13 +16,16 @@ on:
       universe:
         description: "Ticker file"
         default: "universe.txt"
+      provider:
+        description: "Data source: blank = repo default (Yahoo unless DATA_PROVIDER secret is set), or alpaca / yfinance"
+        default: ""
 
 jobs:
   experiment:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
-      DATA_PROVIDER: ${{ secrets.DATA_PROVIDER }}
+      DATA_PROVIDER: ${{ inputs.provider || secrets.DATA_PROVIDER }}
       ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
       ALPACA_API_SECRET: ${{ secrets.ALPACA_API_SECRET }}
     steps:
@@ -36,7 +39,7 @@ jobs:
       - name: Run experiment
         run: |
           {
-            echo "## Experiment: ${{ inputs.name }} ($(date -u +%Y-%m-%d))"
+            echo "## Experiment: ${{ inputs.name }} ($(date -u +%Y-%m-%d), data: ${DATA_PROVIDER:-yfinance})"
             echo '```'
             python experiment.py "${{ inputs.name }}" --years ${{ inputs.years }} --split ${{ inputs.split }} --universe "${{ inputs.universe }}" 2>&1
             echo '```'

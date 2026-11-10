@@ -7,6 +7,7 @@ open, high, low, close, volume (split/dividend adjusted).
 from __future__ import annotations
 
 import os
+import time
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -64,7 +65,11 @@ def _fetch_alpaca(ticker: str, start: date) -> pd.DataFrame:
     while True:
         if token:
             params["page_token"] = token
-        r = requests.get(url, params=params, headers=headers, timeout=30)
+        for attempt in range(5):  # free plan: 200 calls/min, so back off on 429
+            r = requests.get(url, params=params, headers=headers, timeout=30)
+            if r.status_code != 429:
+                break
+            time.sleep(int(r.headers.get("Retry-After", 0) or 0) or 5 * (attempt + 1))
         r.raise_for_status()
         body = r.json()
         rows += body.get("bars") or []
