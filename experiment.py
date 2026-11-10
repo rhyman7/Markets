@@ -18,6 +18,7 @@ from markets.data.loader import load_bars, load_universe
 from scan import drop_unfinished_bar
 from markets.strategies import FibParams, FibPullback, FibTextbook, FibTextbookI, TextbookParams, TrendBaseline
 from markets.strategies import library as lib
+from markets.strategies import breakout as brk
 
 EXPERIMENTS = {
     # 2026-11-10: why does fib_pullback trail random entries in uptrends?
@@ -52,10 +53,16 @@ EXPERIMENTS = {
 # template in markets/strategies/library.py, each against its own matched random control.
 # Pass rules were written in research/log.md BEFORE the first run.
 LIBRARY_EXPERIMENTS = {
-    "fibalgo_screen": [t.name for t in lib.ALL_TOOLS],
+    "fibalgo_screen": lib.ALL_TOOLS,
     # Filled in from the screen's passes, rules unchanged, run with --universe universe_smallcap.txt.
+    # 2026-11-10: nothing passed the screen, so this stays empty.
     "fibalgo_holdout": [],
+    # 2026-11-10: breakout/momentum entries, same template and controls (plan in research/log.md).
+    "breakout_screen": brk.BREAKOUT_TOOLS,
+    # Filled in from breakout_screen's passes, rules unchanged; --universe universe_smallcap.txt.
+    "breakout_holdout": [],
 }
+HOLDOUTS = {"fibalgo_holdout", "breakout_holdout"}
 SCREEN_PASS = dict(min_trades=100, min_gap=0.10, min_z=2.0)      # plus gap > 0 in both periods
 HOLDOUT_PASS = dict(min_trades=100, min_gap=0.0, min_z=1.5)      # plus gap > 0 in both periods
 
@@ -69,24 +76,28 @@ def _mean_se(r):
 
 
 def run_library(name, data, split, benchmark):
-    rules = HOLDOUT_PASS if name == "fibalgo_holdout" else SCREEN_PASS
-    tools = [t for t in lib.ALL_TOOLS if t.name in LIBRARY_EXPERIMENTS[name]]
+    rules = HOLDOUT_PASS if name in HOLDOUTS else SCREEN_PASS
+    tools = LIBRARY_EXPERIMENTS[name]
     if not tools:
         print("No tools listed for this experiment yet.")
         return
     cut = pd.Timestamp(split)
     rows, years = [], {}
 
-    def make(tool):
+    ranks = brk.momentum_ranks(data) if any(getattr(t, "needs_ranks", False) for t in tools) else {}
+
+    def make(tool, ticker):
         st = tool()
         if tool is lib.ComparativeStrength:
             st.benchmark = benchmark
+        if getattr(tool, "needs_ranks", False):
+            st.rank = ranks.get(ticker)
         return st
 
     for tool in tools:
         trades = []
         for t, df in data.items():
-            trades += simulate_ticker(make(tool), t, df)
+            trades += simulate_ticker(make(tool, t), t, df)
         ctl_proto = lib.matched_control(tool, trades)
         ctl = []
         for t, df in data.items():
@@ -173,7 +184,11 @@ def main():
     ap.add_argument("--split", default="2021-01-01")
     ap.add_argument("--tickers", nargs="*")
     ap.add_argument("--universe", help="ticker file (default universe.txt)")
+    ap.add_argument("--cost-bps", type=float, default=5.0,
+                    help="commission + slippage per side, in basis points (5 = 0.05%%)")
     args = ap.parse_args()
+    import markets.backtest as bt
+    bt.COST_PER_SIDE = args.cost_bps / 10_000
 
     tickers = [t.upper() for t in args.tickers] if args.tickers else load_universe(args.universe or None)
     data = {}
@@ -184,7 +199,8 @@ def main():
                 data[t] = df
         except Exception as e:
             print(f"skip {t}: {type(e).__name__}")
-    print(f"{args.name}: {len(data)} tickers, {args.years:g} years, split {args.split}\n")
+    print(f"{args.name}: {len(data)} tickers, {args.years:g} years, split {args.split}, "
+          f"costs {args.cost_bps:g} bps per side\n")
 
     if args.name in LIBRARY_EXPERIMENTS:
         bench = drop_unfinished_bar(load_bars("SPY", years=args.years))["close"]

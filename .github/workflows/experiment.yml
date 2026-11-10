@@ -16,6 +16,9 @@ on:
       universe:
         description: "Ticker file"
         default: "universe.txt"
+      cost_bps:
+        description: "Commission + slippage per side, basis points (5 = 0.05%)"
+        default: "5"
       provider:
         description: "Data source: blank = alpaca (or the DATA_PROVIDER secret if set); yfinance to use Yahoo"
         default: ""
@@ -41,6 +44,6 @@ jobs:
           {
             echo "## Experiment: ${{ inputs.name }} ($(date -u +%Y-%m-%d), data: ${DATA_PROVIDER:-yfinance})"
             echo '```'
-            python experiment.py "${{ inputs.name }}" --years ${{ inputs.years }} --split ${{ inputs.split }} --universe "${{ inputs.universe }}" 2>&1
+            python experiment.py "${{ inputs.name }}" --years ${{ inputs.years }} --split ${{ inputs.split }} --universe "${{ inputs.universe }}" --cost-bps "${{ inputs.cost_bps }}" 2>&1
             echo '```'
           } | tee -a "$GITHUB_STEP_SUMMARY"

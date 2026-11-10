@@ -2,6 +2,32 @@
 
 Newest first. Record every experiment, including the ones that didn't work.
 
+## 2026-11-10 — Costs added; breakout/momentum screen: plan (written before running)
+
+**Costs.** The backtester now charges commission + slippage per side as a fraction of
+price, taken out of R (`--cost-bps`, default 5 bps = 0.05% per side, about 0.1% round trip).
+That's realistic-to-optimistic for liquid large caps on market orders. All results from
+here on include it unless they say otherwise. Results logged before this entry have no costs.
+First check: rerun fib_midcap (variant I vs control) at 5 bps to see what's left of the
++0.16R gap. Expected: both drop. Variant I has a tighter typical stop, so it drops a bit more.
+
+**Breakout/momentum screen.** The last open item on the list, and a different family from
+everything tested so far (all pullbacks or reversals). 3 rules only, to keep luck down. Same
+template and matched control as the FibAlgo screen, "up" context, so the control is random
+entries in the same uptrends:
+- breakout_52w_high: close above the prior 252 bars' highest close; stop below the 10-bar low.
+- breakout_squeeze: prior 20 bars spanned <= 4 ATR, close above their high; stop below their low.
+- momentum_top_decile: 126-bar return enters the universe's top 10% that day; stop below the
+  10-bar low.
+Caveat set beforehand: the template exits at +2R or 20 bars. Momentum's edge in the
+literature comes from holding winners for months, so this tests breakout TIMING only, not
+momentum as a holding strategy. If all three fail, that's the claim that fails.
+
+Pass rules unchanged: >= 100 trades, gap >= +0.10R with z >= 2.0, gap > 0 in both halves.
+Holdout for passes: universe_smallcap.txt, rules unchanged, at 10 bps per side (small caps
+cost more to trade); confirmed with >= 100 trades, gap > 0 in both halves, z >= 1.5.
+Rule count on this repo so far: 6 fib variants + 25 FibAlgo rules + these 3 = 34.
+
 ## 2026-11-10 — FibAlgo library screen: results (large caps)
 
 Plan and pass rules: next entry down (written before this run). 142 tickers (universe.txt),

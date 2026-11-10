@@ -26,7 +26,11 @@ def main() -> None:
     ap.add_argument("--years", type=float, default=10)
     ap.add_argument("--max-hold", type=int, default=40)
     ap.add_argument("--split", help="YYYY-MM-DD: also summarize trades before/after this date")
+    ap.add_argument("--cost-bps", type=float, default=5.0,
+                    help="commission + slippage per side, in basis points (5 = 0.05%%)")
     args = ap.parse_args()
+    import markets.backtest as bt
+    bt.COST_PER_SIDE = args.cost_bps / 10_000
 
     strategy = STRATEGIES[args.strategy]()
     tickers = [t.upper() for t in args.tickers] if args.tickers else load_universe()

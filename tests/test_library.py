@@ -3,6 +3,7 @@ import pandas as pd
 import pytest
 
 from markets.backtest import simulate_ticker
+from markets.strategies import breakout as brk
 from markets.strategies import library as lib
 from markets.strategies.base import Setup, Strategy
 
@@ -24,10 +25,12 @@ def make(tool, bench):
     st = tool()
     if tool is lib.ComparativeStrength:
         st.benchmark = bench
+    if getattr(tool, "needs_ranks", False):
+        st.rank = pd.Series(np.random.default_rng(7).random(len(bench)), index=bench.index)
     return st
 
 
-@pytest.mark.parametrize("tool", lib.ALL_TOOLS, ids=lambda t: t.name)
+@pytest.mark.parametrize("tool", lib.ALL_TOOLS + brk.BREAKOUT_TOOLS, ids=lambda t: t.name)
 def test_no_lookahead(tool):
     """Signals and orders up to bar k must not change when later bars are added."""
     bench = walk(99)["close"]
@@ -45,7 +48,7 @@ def test_no_lookahead(tool):
 def test_every_tool_produces_signals_on_random_data():
     bench = walk(99, n=1500)["close"]
     rare = {"wyckoff_accumulation", "wyckoff_selling_climax", "wyckoff_reaccumulation", "ict_market_maker_buy"}
-    for tool in lib.ALL_TOOLS:
+    for tool in lib.ALL_TOOLS + brk.BREAKOUT_TOOLS:
         hits = 0
         for seed in range(4):
             st = make(tool, bench)
@@ -144,3 +147,22 @@ def test_matched_control_copies_mechanics():
     assert ctl.context == "up" and ctl.limit_atr == 0.5 and ctl.stop_atr == 0.75
     ctl2 = lib.matched_control(lib.SellingClimax, [T(2.1, np.nan), T(1.9, np.nan)])
     assert ctl2.context == "any" and ctl2.limit_atr is None and ctl2.stop_atr == 2.0
+
+
+def test_costs_come_out_of_r():
+    # Buy at 100 (next open), stop 95 (risk 5), time exit at 101 after 3 bars.
+    df = bars([[100, 100.5, 99.5, 100]] * 3 + [[101, 101.2, 100.8, 101]] * 5)
+    free = simulate_ticker(_Fixed(0, None, 95.0, 120.0, max_hold=3), "T", df, cost=0.0)[0]
+    paid = simulate_ticker(_Fixed(0, None, 95.0, 120.0, max_hold=3), "T", df, cost=0.001)[0]
+    assert free.exit_reason == "time"
+    assert free.r - paid.r == pytest.approx(0.001 * (free.entry + df["close"].iat[3]) / 5)
+
+
+def test_momentum_ranks_use_same_day_closes_only():
+    data = {f"T{k}": walk(k, n=400) for k in range(25)}
+    full = brk.momentum_ranks(data)
+    part = brk.momentum_ranks({t: df.iloc[:300] for t, df in data.items()})
+    for t in data:
+        pd.testing.assert_series_equal(part[t], full[t].iloc[:300], check_names=False)
+    vals = pd.concat(full.values()).dropna()
+    assert vals.between(0, 1).all() and len(vals) > 0

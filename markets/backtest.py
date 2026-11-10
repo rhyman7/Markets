@@ -12,6 +12,9 @@ Trade management (shared by all strategies unless they override it later):
   (40 by default; a strategy can set its own `max_hold` attribute).
 - A gap through the stop exits at the open (can lose more than 1R).
 - If a bar touches both the stop and a target, assume the stop hit first (conservative).
+- Costs: COST_PER_SIDE (a fraction of price, e.g. 0.0005 = 0.05%) is charged on the entry
+  and on every exit, and taken out of R. It covers commission and slippage together.
+  Default 0 here; experiment.py and backtest.py set it from --cost-bps (default 5 bps).
 - One position per ticker at a time. Positions across tickers are independent:
   this measures the edge of the rules, not portfolio constraints like max positions.
 """
@@ -23,6 +26,8 @@ import numpy as np
 import pandas as pd
 
 from .strategies.base import Strategy
+
+COST_PER_SIDE = 0.0   # commission + slippage per side as a fraction of price (set by the CLIs)
 
 
 @dataclass
@@ -44,7 +49,9 @@ class Trade:
     limit_gap_atr: float = float("nan")  # (signal close - limit) / ATR for limit entries
 
 
-def simulate_ticker(strategy: Strategy, ticker: str, df: pd.DataFrame, max_hold: int = 40) -> list[Trade]:
+def simulate_ticker(strategy: Strategy, ticker: str, df: pd.DataFrame, max_hold: int = 40,
+                    cost: float | None = None) -> list[Trade]:
+    cost = COST_PER_SIDE if cost is None else cost
     max_hold = getattr(strategy, "max_hold", None) or max_hold   # a strategy may set its own
     df = strategy.prepare(df)
     o, h, l, c = (df[k].to_numpy() for k in ("open", "high", "low", "close"))
@@ -96,7 +103,8 @@ def simulate_ticker(strategy: Strategy, ticker: str, df: pd.DataFrame, max_hold:
                 px, why = c[j], "open (end of data)"
             if px is not None:
                 frac = 0.5 if half_done else 1.0
-                tr.r = realized + frac * (px - entry) / risk
+                traded = entry + frac * px + (0.5 * t1 if half_done else 0.0)   # value bought + sold
+                tr.r = realized + frac * (px - entry) / risk - cost * traded / risk
                 tr.exit_date, tr.exit_reason, tr.bars_held = df.index[j], why, j - i
                 trades.append(tr)
                 break

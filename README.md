@@ -84,7 +84,7 @@ How to read a result honestly:
 3. **Few trades means noise.** Under ~100 trades, treat any number as a guess.
 4. **Don't tune to the past.** Every parameter you tweak to improve the backtest makes
    it look better than the future will be. Change rules for a reason, then re-test.
-5. **Known gaps:** no commissions or slippage; no earnings-date filter; today's
+5. **Known gaps:** costs are a flat estimate (see Costs); no earnings-date filter; today's
    `universe.txt` is used for all history (survivorship bias: stocks that failed
    aren't on the list, which flatters results); positions are not capped at 5.
 
@@ -101,6 +101,17 @@ same filter, stop size and entry type. The plan and pass rules are in `research/
 - Holdout: Actions → Build universe (once, creates `universe_smallcap.txt`), then list the
   screen's passes in `LIBRARY_EXPERIMENTS["fibalgo_holdout"]` in `experiment.py` and run
   Experiment → `fibalgo_holdout` with universe `universe_smallcap.txt`.
+
+## Costs
+
+Backtests charge commission + slippage per side (`--cost-bps`, default 5 = 0.05%), taken out
+of R. Pick another value on an Experiment run with the `cost_bps` input. Logged results from
+before 2026-11-10 afternoon were run without costs.
+
+## Breakout/momentum screen
+
+`markets/strategies/breakout.py`: three breakout/momentum entries with the same template and
+matched controls as the FibAlgo screen. Run Experiment → `breakout_screen`.
 
 ## Layout
 
