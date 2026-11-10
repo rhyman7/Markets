@@ -2,6 +2,64 @@
 
 Newest first. Record every experiment, including the ones that didn't work.
 
+## 2026-11-10 — FibAlgo library screen: results (large caps)
+
+Plan and pass rules: next entry down (written before this run). 142 tickers (universe.txt),
+Alpaca SIP data through 2026-11-09 (no unfinished bar), split 2021-01-01, no costs.
+Run: https://github.com/rhyman7/Markets/actions/runs/42878359718
+
+**Passed: none (0 of 25).** No rule reached even half the +0.10R bar. So nothing goes to the
+SmallCap 600 holdout. universe_smallcap.txt (600 fresh tickers) is built and kept for later tests.
+
+Gap = tool expectancy − its matched random control (R). z = gap / combined standard error.
+
+| Rule | Trades | Tool R | Control R | Gap | z | Gap 2016–20 | Gap 2021–26 |
+|---|---|---|---|---|---|---|---|
+| ICT displacement (FVG retest) | 843 | +0.022 | −0.033 | +0.055 | 0.8 | +0.219 | −0.026 |
+| Wyckoff SOS → LPS | 1,001 | +0.181 | +0.136 | +0.045 | 1.0 | +0.052 | +0.050 |
+| ICT NWOG retest | 2,057 | +0.016 | −0.015 | +0.031 | 0.8 | −0.008 | +0.053 |
+| ICT order block | 722 | +0.081 | +0.062 | +0.019 | 0.2 | +0.088 | −0.021 |
+| ICT FVG | 8,366 | +0.004 | −0.015 | +0.019 | 0.7 | +0.014 | +0.021 |
+| ICT IPDA range | 2,948 | +0.155 | +0.148 | +0.007 | 0.3 | −0.046 | +0.035 |
+| ICT key-level sweep | 16,797 | +0.090 | +0.083 | +0.007 | 0.3 | −0.007 | +0.018 |
+| Wyckoff spring + test | 2,580 | +0.140 | +0.142 | −0.002 | −0.1 | +0.054 | −0.018 |
+| Wyckoff VSA no supply | 4,484 | +0.016 | +0.019 | −0.003 | −0.1 | +0.049 | −0.039 |
+| ICT SD breakout (2R) | 3,843 | +0.124 | +0.132 | −0.007 | −0.4 | −0.023 | −0.000 |
+| ICT SD breakout (SD targets) | 3,835 | +0.121 | +0.132 | −0.011 | −0.5 | −0.028 | −0.003 |
+| ICT BOS | 2,431 | +0.094 | +0.109 | −0.015 | −0.6 | +0.024 | −0.044 |
+| ICT CHoCH/MSS | 2,990 | +0.105 | +0.122 | −0.017 | −0.8 | −0.090 | +0.019 |
+| ICT volume imbalance | 13,728 | −0.014 | +0.004 | −0.018 | −0.7 | +0.001 | −0.033 |
+| Wyckoff re-accumulation | 1,369 | +0.061 | +0.111 | −0.050 | −1.9 | −0.131 | −0.001 |
+| ICT market maker buy | 323 | +0.049 | +0.103 | −0.054 | −1.2 | −0.241 | +0.018 |
+| ICT liquidity sweep | 2,555 | +0.024 | +0.083 | −0.059 | −1.7 | −0.170 | −0.005 |
+| ICT premium/discount OTE | 1,378 | +0.018 | +0.090 | −0.072 | −1.3 | −0.116 | −0.046 |
+| ICT dealing range | 4,018 | +0.084 | +0.157 | −0.073 | −2.6 | +0.007 | −0.107 |
+| Wyckoff VSA stopping volume | 3,323 | +0.062 | +0.136 | −0.074 | −2.2 | −0.222 | −0.006 |
+| Wyckoff price cycle pullback | 2,665 | −0.006 | +0.083 | −0.089 | −1.9 | −0.179 | −0.045 |
+| ICT unicorn | 140 | −0.093 | +0.003 | −0.095 | −0.7 | −0.198 | −0.052 |
+| Wyckoff comparative strength | 2,551 | +0.021 | +0.151 | −0.130 | −4.4 | −0.186 | −0.101 |
+| Wyckoff selling climax + AR | 250 | −0.071 | +0.145 | −0.216 | −2.9 | −0.746 | +0.122 |
+| Wyckoff accumulation (SC→spring→SOS) | 11 | −0.139 | +0.122 | −0.261 | −1.3 | — | — |
+
+Findings:
+- **No ICT or Wyckoff rule beat random entries with the same stops and exits.** The 25 gaps
+  sit around zero (median about −0.02R), close to what pure noise would give.
+- **Several do worse than random.** Comparative strength (z −4.4), selling climax (−2.9),
+  dealing range (−2.6) and stopping volume (−2.2) are significantly below their controls.
+  These are long-only "bounce" or "relative strength" entries. Buying them was worse than
+  buying at random. That's a reason to avoid them, not a short signal (shorts weren't tested).
+- Positive raw R (SOS/LPS +0.18, spring test +0.14, IPDA +0.16) comes from buying stocks in
+  a rising market. Their controls earned about the same.
+- The best gaps (displacement +0.06, SOS/LPS +0.05) are about 1 SE and would be expected
+  from 25 tries anyway. Running them on the holdout now would be a forking-path test.
+- Caveat: this tests ONE mechanical reading of each concept with ONE exit template. A
+  different reading could do differently, but each new variant adds to the count of tries.
+  Accumulation fired only 11 times, so it is untested in practice.
+
+Conclusion: FibAlgo's ICT/Wyckoff tools give no measurable edge on daily large-cap bars in
+this form. Variant I remains the only live hypothesis. Tries so far on this repo: 25 here,
+plus the 6 fib variants earlier.
+
 ## 2026-11-10 — FibAlgo library screen: plan (written before any run on real data)
 
 Request: test every tool on the 28 FibAlgo ICT/Wyckoff library pages. Reviewed all 28.
