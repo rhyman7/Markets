@@ -2,6 +2,47 @@
 
 Newest first. Record every experiment, including the ones that didn't work.
 
+## 2026-11-10 — Variant I on fresh stocks (S&P MidCap 400)
+
+Written down before running: variant I's rules unchanged, on 400 mid-caps that share no
+ticker with universe.txt. I counts as confirmed only if it beats the control (F) in both
+periods. Expected ~1,000 trades; got far fewer.
+
+Data: universe_midcap.txt (398 of 400 tickers had enough history), 10 years of Yahoo daily
+bars pulled 2026-11-10 ~12:35 ET, split 2021-01-01. No costs or slippage. Today's index
+membership used for all history.
+Run: https://github.com/rhyman7/Markets/actions/runs/42865573963
+
+| Variant | Trades | Exp. R | 2016–20 (trades) | 2021–26 (trades) | Profit factor | Max DD |
+|---|---|---|---|---|---|---|
+| I. Reversal candle + RSI < 40 turning up | 392 | +0.215 | +0.386 (89) | +0.164 (303) | 1.55 | 18R |
+| F. Random entries in uptrends (control) | 3,935 | +0.029 | +0.160 (1,014) | −0.017 (2,921) | 1.06 | 98R |
+
+Findings:
+- **I passed the test set in advance.** It beat the control in both periods. The gap is
+  about +0.19R overall and +0.18R since 2021, roughly 3 and 2.6 standard errors (I's
+  standard error is about ±0.06R overall, ±0.07R since 2021, assuming ~1.2R spread per trade).
+- **I's own result barely moved between universes** (+0.177R large caps, +0.215R mid-caps).
+  The gap opened mostly because the control fell from +0.132R to +0.029R on mid-caps.
+- **The pre-2021 half is noise**: 89 trades.
+- **The last two years are flat**: 2025 +0.017R (62 trades), 2026 −0.084R (55 trades).
+  The control's by-year numbers weren't printed, so it's unknown whether I still beat it there.
+- I by year: 2017 +1.28 (10), 2018 +0.16 (37), 2019 +0.41 (24), 2020 +0.33 (18),
+  2021 +0.34 (45), 2022 +0.17 (31), 2023 +0.09 (48), 2024 +0.46 (62).
+- Deeper pullbacks did better (50–61.8%: +0.46R, 139 trades; 38.2–50%: +0.08R, 253 trades).
+  Noted only. Not to be tuned on.
+
+Reasons the result is weaker than it looks:
+- Survivorship may favour I over the control, not just flatter both: stocks in today's
+  index are the ones whose sharp dips recovered, and I buys sharp dips.
+- I's trades cluster in market sell-offs, so they aren't independent and the true
+  standard error is larger than the figures above.
+- No costs; mid-cap spreads are wider than large-cap.
+
+Conclusion: first real evidence for I, from a test fixed in advance on unseen stocks.
+Not proof, and not tradable on this alone. Next: print the control by year to check
+2025–26, then paper trade I forward.
+
 ## 2026-11-10 — Textbook 4-step Fibonacci (variants fixed before running)
 
 Same data and caveats as the entry below. Run: https://github.com/rhyman7/Markets/actions/runs/42863792799
