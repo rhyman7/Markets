@@ -2,6 +2,40 @@
 
 Newest first. Record every experiment, including the ones that didn't work.
 
+## 2026-11-10 — Variant I vs control by year (mid-caps)
+
+Rerun of fib_midcap with a by-year table for both variants and today's unfinished bar
+dropped (the previous run, at 12:35 ET, had included it). WCC failed to download this time,
+so 397 tickers. Totals barely changed: I 396 trades, +0.219R (+0.396 pre, +0.167 post);
+control +0.029R.
+Run: https://github.com/rhyman7/Markets/actions/runs/42866934330
+
+| Year | I trades | I exp. R | Control trades | Control exp. R | Gap |
+|---|---|---|---|---|---|
+| 2017 | 10 | +1.279 | 107 | +0.522 | +0.76 |
+| 2018 | 38 | +0.191 | 271 | −0.079 | +0.27 |
+| 2019 | 24 | +0.405 | 284 | +0.237 | +0.17 |
+| 2020 | 18 | +0.329 | 351 | +0.177 | +0.15 |
+| 2021 | 45 | +0.371 | 551 | −0.004 | +0.38 |
+| 2022 | 33 | +0.131 | 244 | −0.161 | +0.29 |
+| 2023 | 49 | +0.119 | 378 | +0.015 | +0.10 |
+| 2024 | 62 | +0.458 | 625 | +0.087 | +0.37 |
+| 2025 | 62 | +0.010 | 528 | −0.033 | +0.04 |
+| 2026 | 55 | −0.086 | 595 | −0.087 | +0.00 |
+
+Findings:
+- **I was ahead of the control in 9 of 10 years and level in 2026.** The edge is spread
+  across years, not carried by one good stretch.
+- **But the gap has shrunk to about zero in 2025–26.** Combined: I −0.035R on 117 trades,
+  control −0.062R. With ~0.11R standard error on I there, that says nothing either way.
+- **Both lost money in 2025–26 on mid-caps.** I's flat recent result reflects a bad market
+  for buying mid-caps in uptrends, not I alone falling apart.
+- No single year has enough I trades (10–62) to mean anything on its own.
+
+Conclusion: unchanged. I is a live hypothesis with real support; the recent fade is the
+main open question, and only forward data can answer it. Next: paper trade I forward
+against the scanner, logging every signal including the ones not taken.
+
 ## 2026-11-10 — Variant I on fresh stocks (S&P MidCap 400)
 
 Written down before running: variant I's rules unchanged, on 400 mid-caps that share no
