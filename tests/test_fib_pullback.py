@@ -86,3 +86,43 @@ def test_no_edge_on_driftless_random_walks():
         stats = summarize(trades)
         assert stats["trades"] > 150, (strat.name, stats)
         assert abs(stats["expectancy_R"]) < 0.15, (strat.name, stats)
+
+
+def test_textbook_limit_and_pattern():
+    from markets.strategies import FibTextbook, TextbookParams
+
+    s = FibTextbook(TextbookParams(mode="limit"))
+    df = s.prepare(uptrend_with_pullback())
+    setup = s.setup("TB", df, len(df) - 1)
+    assert setup is not None and setup.limit is not None
+    lv = setup.levels
+    expected = lv["swing_high"] - 0.559 * (lv["swing_high"] - lv["swing_low"])
+    assert abs(setup.limit - expected) < 1e-6
+    assert setup.stop < lv["fib_0.786"] < setup.limit
+
+    # Limit fills only when price trades down to it.
+    base = uptrend_with_pullback()
+    down = make_bars(list(np.linspace(89, 84, 6)) + list(np.linspace(84, 115, 25)))
+    down.index = pd.bdate_range(base.index[-1] + pd.offsets.BDay(), periods=len(down))
+    trades = simulate_ticker(s, "TB", pd.concat([base, down]))
+    assert trades and all(t.entry <= t.t1 for t in trades)
+    last = trades[-1]
+    assert last.entry <= expected + 1e-6
+
+
+def test_no_edge_on_random_walks_textbook():
+    from markets.strategies import FibTextbook, TextbookParams
+
+    rng = np.random.default_rng(11)
+    series = []
+    while len(series) < 120:
+        c = 200 + np.cumsum(rng.normal(0, 2.0, 1000))
+        if c.min() > 20:
+            series.append(make_bars(c))
+    for mode in ("limit", "pattern"):
+        trades = []
+        for k, df in enumerate(series):
+            trades += simulate_ticker(FibTextbook(TextbookParams(mode=mode)), f"R{k}", df)
+        stats = summarize(trades)
+        assert stats["trades"] > 100, (mode, stats)
+        assert abs(stats["expectancy_R"]) < 0.2, (mode, stats)

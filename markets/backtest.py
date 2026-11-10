@@ -2,6 +2,8 @@
 
 Trade management (shared by all strategies unless they override it later):
 - Signal on bar i's close -> enter at bar i+1's open. Skip if it opens at/below the stop.
+- Limit orders (Setup.limit): fill on bar i+1 only if its low reaches the limit, at the
+  lower of the open and the limit. Unfilled orders are re-evaluated on the next bar.
 - R = entry - stop, using the actual entry price.
 - Half the position exits at the first target; the stop then moves to breakeven.
 - The rest exits at the last target, the stop, or the close after `max_hold` bars.
@@ -48,7 +50,13 @@ def simulate_ticker(strategy: Strategy, ticker: str, df: pd.DataFrame, max_hold:
         if not (s and s.triggered and s.qualifies):
             i += 1
             continue
-        entry = o[i + 1]
+        if s.limit is not None:
+            if l[i + 1] > s.limit:
+                i += 1
+                continue
+            entry = min(o[i + 1], s.limit)
+        else:
+            entry = o[i + 1]
         if entry <= s.stop:
             i += 1
             continue

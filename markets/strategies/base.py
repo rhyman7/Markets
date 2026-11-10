@@ -23,6 +23,7 @@ class Setup:
     targets: list[float]       # in order; first is a partial-profit target
     levels: dict[str, float] = field(default_factory=dict)  # for charts/notes
     notes: str = ""
+    limit: float | None = None  # if set: a buy limit for the next bar instead of buying at the open
 
     @property
     def risk(self) -> float:

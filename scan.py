@@ -53,7 +53,10 @@ def main() -> None:
         s = strategy.setup(t, df, len(df) - 1)
         if s is None:
             continue
-        status = "TRIGGERED" if s.triggered and s.qualifies else "setting up" if s.qualifies else "pass (R:R)"
+        if s.limit is not None:
+            status = "BUY LIMIT"
+        else:
+            status = "TRIGGERED" if s.triggered and s.qualifies else "setting up" if s.qualifies else "pass (R:R)"
         rows.append({"ticker": t, "status": status, "date": s.date.date(),
                      "close": round(df["close"].iat[-1], 2), "trigger": round(s.trigger, 2),
                      "entry": round(s.entry, 2), "stop": round(s.stop, 2),
@@ -61,7 +64,7 @@ def main() -> None:
                      "rr_t1": round(s.rr(0), 2), "rr_t2": round(s.rr(1), 2),
                      "risk_pct": round(100 * s.risk / s.entry, 1), "notes": s.notes})
 
-    order = {"TRIGGERED": 0, "setting up": 1, "pass (R:R)": 2}
+    order = {"TRIGGERED": 0, "BUY LIMIT": 0, "setting up": 1, "pass (R:R)": 2}
     out = pd.DataFrame(rows)
     if out.empty:
         print(f"No setups across {len(tickers)} tickers.")
