@@ -55,8 +55,8 @@ Results print and are saved to `output/scan_<strategy>_<date>.csv`.
 `journal/signals.csv` is the forward test: every signal the daily scan fires, taken or not.
 Fill in the `taken` column (`y`/`n`, plus why if not). Trades you actually place go in
 `journal/trades.csv` as before. After a few months, compare the signals' results to the
-backtest (about +0.19R per trade on mid-caps with Alpaca data, +0.22R with Yahoo;
-+0.18R on large caps; all before costs).
+backtest (about +0.18R per trade on mid-caps with Alpaca data after 5 bps/side costs;
++0.19R before costs, +0.22R with Yahoo; +0.18R on large caps before costs).
 Signals mean "buy at the next session's open"; the stop and targets are in the row.
 
 ```bash

@@ -2,6 +2,33 @@
 
 Newest first. Record every experiment, including the ones that didn't work.
 
+## 2026-11-10 — Results: variant I with costs, breakout/momentum screen
+
+Both at 5 bps per side, Alpaca data through 2026-11-09, split 2021-01-01.
+
+**Variant I on mid-caps with costs** (run https://github.com/rhyman7/Markets/actions/runs/42880007829):
+I +0.177R on 427 trades (2016–20 +0.305 on 103, 2021–26 +0.137 on 324), PF 1.43, max DD 21R.
+Control F +0.002R on 4,203 (2016–20 +0.144, 2021–26 −0.050). Gap +0.175R, vs +0.163R
+without costs. **Costs cost I only ~0.01R and the control ~0.02R** (I's stops are wider
+than F's 5%). 2026 is still a loss for both (I −0.127 on 57 trades, F −0.142). Conclusion
+unchanged: I is still a live hypothesis; the recent fade is still the open question.
+
+**Breakout/momentum screen on large caps** (run https://github.com/rhyman7/Markets/actions/runs/42880020909):
+
+| Rule | Trades | Tool R | Control R | Gap | z | Gap 2016–20 | Gap 2021–26 |
+|---|---|---|---|---|---|---|---|
+| breakout_52w_high | 3,353 | +0.067 | +0.087 | −0.019 | −0.8 | −0.050 | −0.002 |
+| breakout_squeeze | 1,980 | +0.064 | +0.080 | −0.016 | −0.7 | −0.068 | +0.013 |
+| momentum_top_decile | 1,097 | +0.005 | +0.108 | −0.103 | −2.5 | −0.197 | −0.051 |
+
+**Passed: none (0 of 3).** Buying a 52-week high or a tight-range breakout made money, but no
+more than random entries in the same uptrends. Buying stocks as they entered the top decile
+of 6-month returns was clearly worse than random (z −2.5), worst before 2021. With a +2R /
+20-bar exit, buying after a strong run tends to buy short-term exhaustion. This doesn't test
+momentum held for months (see the caveat in the plan). Nothing goes to the holdout.
+
+Rule count on this repo: 34 tried, 1 confirmed on fresh stocks (variant I).
+
 ## 2026-11-10 — Costs added; breakout/momentum screen: plan (written before running)
 
 **Costs.** The backtester now charges commission + slippage per side as a fraction of
