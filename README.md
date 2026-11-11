@@ -15,6 +15,10 @@ Everything can run on GitHub's servers from the **Actions** tab:
   on `universe.txt` and `universe_midcap.txt`; results appear on the run's summary page.
   Every triggered signal is appended to `journal/signals.csv` and committed automatically.
 
+- **Dashboard**: a web page of current setups for every rule, with entry, stop and targets,
+  published with GitHub Pages. It rebuilds every 30 minutes during the session and after each
+  Daily scan (`python dashboard.py`). See "Dashboard" below.
+
 Each run's CSV files can be downloaded under **Artifacts** at the bottom of its page.
 On GitHub, data comes from Alpaca's free plan (full-market SIP feed, history since 2016),
 using the `ALPACA_API_KEY` and `ALPACA_API_SECRET` repository secrets. To force Yahoo,
@@ -62,6 +66,26 @@ Signals mean "buy at the next session's open"; the stop and targets are in the r
 ```bash
 python scan.py --strategy fib_textbook_i --universe universe_midcap.txt --signal-log journal/signals.csv
 ```
+
+## Dashboard
+
+`python dashboard.py` scans `universe.txt` and `universe_midcap.txt` with every rule in the
+repo and writes `site/index.html` (plus `site/data.json`). The **Dashboard** workflow publishes
+it at `https://rhyman7.github.io/Markets/`. One-time setup: repo Settings → Pages → Source:
+**GitHub Actions**.
+
+- **Variant I** is on top: new signals (buy at the next open), stocks sitting in its
+  38.2–61.8% buy zone with what's still missing, and a replay of every signal in
+  `journal/signals.csv` using the backtester's exits.
+- **Every other rule** is listed under "Rules that failed their test", each with its backtest
+  gap against its random control. Their levels are real; the evidence that they help is not.
+  Library and breakout rules are scanned on large caps only (where they were tested).
+- Rules only see completed daily candles. During the session the page shows the latest price
+  (about 15 minutes behind on Alpaca's free plan) and marks anything that would fire on
+  today's candle as "forming". That is not a signal until the close.
+- Shares are sized at 1% risk from the account size typed into the page (kept in your browser).
+- The evidence numbers shown next to each rule live in `markets/dashboard.py` and are copied
+  from `research/log.md`. Update them there when a result changes.
 
 ## Backtesting
 

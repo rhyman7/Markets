@@ -104,10 +104,10 @@ class FibTextbook(Strategy):
         zone_top, zone_bot = level(p.zone[0]), level(p.zone[1])
         if p.require_ma and not (zone_bot <= ma50 <= zone_top):
             return None
-        if p.require_rsi:
-            r = df["rsi14"].to_numpy()
-            if np.nanmin(r[hi_idx + 1:i + 1]) >= p.rsi_oversold or not r[i] > r[i - 1]:
-                return None
+        r = df["rsi14"].to_numpy()
+        rsi_min, rsi_rising = float(np.nanmin(r[hi_idx + 1:i + 1])), bool(r[i] > r[i - 1])
+        if p.require_rsi and (rsi_min >= p.rsi_oversold or not rsi_rising):
+            return None
 
         limit = None
         if p.mode == "limit":
@@ -127,7 +127,9 @@ class FibTextbook(Strategy):
             levels={"swing_low": float(swing_low), "swing_high": float(swing_high),
                     "fib_0.382": float(zone_top), "fib_0.618": float(zone_bot),
                     "fib_0.786": float(level(0.786)), "ma50": float(ma50),
-                    "depth": float((swing_high - px) / rng)},
+                    "depth": float((swing_high - px) / rng),
+                    # reported for the dashboard's watch list; not used by any rule
+                    "rsi": float(r[i]), "rsi_min": rsi_min, "rsi_rising": float(rsi_rising)},
             notes=f"swing {df.index[lo_idx].date()} -> {df.index[hi_idx].date()}, "
                   + (f"buy limit {limit:.2f}" if limit else "reversal candle in zone"),
         )
