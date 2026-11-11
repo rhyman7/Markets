@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Markets: setups board</title>
+<style>
+:root{
+  --bg:#f6f4ef; --panel:#fffdf8; --ink:#1c1b18; --muted:#6b675e; --line:#dcd7ca; --soft:#ece8dc;
+  --good:#1f6f4a; --good-bg:#dff0e5; --bad:#a23a2a; --bad-bg:#f6e0da; --warn:#8a5a00; --warn-bg:#f8ecc8;
+  --neutral:#5a5a5a; --neutral-bg:#e8e5dc; --accent:#234a7a;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:"Avenir Next","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#14161a; --panel:#1b1e24; --ink:#e9e6df; --muted:#9a968c; --line:#30343c; --soft:#252931;
+  --good:#6fcf9b; --good-bg:#163325; --bad:#ef8f7d; --bad-bg:#3a1d18; --warn:#e8bf5a; --warn-bg:#3a2f12;
+  --neutral:#b5b1a7; --neutral-bg:#2a2e36; --accent:#8fb6ea;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--sans);-webkit-text-size-adjust:100%}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 60px}
+header.top{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between;border-bottom:2px solid var(--ink);padding-bottom:12px}
+h1{font-size:22px;margin:0;letter-spacing:.01em}
+h1 small{display:block;font-size:13px;font-weight:400;color:var(--muted)}
+.acct{font-size:13px;color:var(--muted);text-align:right}
+.acct input{font:600 15px var(--mono);width:120px;padding:5px 8px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--ink);text-align:right}
+.strip{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:13px;color:var(--muted);padding:10px 0}
+.strip b{color:var(--ink);font-weight:600}
+.banner{border-left:4px solid var(--warn);background:var(--warn-bg);padding:10px 14px;margin:6px 0 4px;font-size:14px;border-radius:0 4px 4px 0}
+.banner.bad{border-color:var(--bad);background:var(--bad-bg)}
+h2{font-size:18px;margin:34px 0 4px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+h3{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:24px 0 8px;font-weight:600}
+h3 .n{color:var(--ink)}
+p.lede{margin:4px 0 0;color:var(--muted);max-width:78ch}
+.badge{display:inline-block;font:600 11px var(--sans);letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:3px;white-space:nowrap}
+.b-passed{background:var(--good-bg);color:var(--good)}
+.b-noedge{background:var(--neutral-bg);color:var(--neutral)}
+.b-worse{background:var(--bad-bg);color:var(--bad)}
+.b-warn{background:var(--warn-bg);color:var(--warn)}
+.evidence{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:12px 0 6px}
+.evidence>div{background:var(--panel);padding:10px 14px}
+.evidence .k{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.evidence .v{font:600 20px var(--mono)}
+.evidence .s{font-size:12px;color:var(--muted)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 16px}
+.card.forming{border-style:dashed}
+.card .hd{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.tk{font:700 20px var(--mono);letter-spacing:.02em}
+.sub{font-size:12px;color:var(--muted)}
+.live{font:600 15px var(--mono);text-align:right}
+.action{font-size:13px;font-weight:600;margin:8px 0 2px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.grid4 .k{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.grid4 .v{font:600 15px var(--mono)}
+.grid4 .s{font:12px var(--mono);color:var(--muted)}
+.size{margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);font-size:13px}
+.size b{font-family:var(--mono)}
+.ladder{position:relative;height:30px;margin:14px 4px 2px}
+.ladder .track{position:absolute;left:0;right:0;top:16px;height:6px;border-radius:3px;background:var(--soft);overflow:hidden}
+.ladder .seg{position:absolute;top:0;bottom:0}
+.seg.risk{background:var(--bad);opacity:.45}.seg.r1{background:var(--good);opacity:.4}.seg.r2{background:var(--good);opacity:.2}
+.ladder .tick{position:absolute;top:0;transform:translateX(-50%);font:600 9.5px var(--sans);color:var(--muted);text-align:center;letter-spacing:.04em}
+.ladder .tick::after{content:"";display:block;width:1px;height:12px;margin:1px auto 0;background:var(--muted)}
+.ladder .dot{position:absolute;top:12px;width:14px;height:14px;border-radius:50%;background:var(--accent);border:2px solid var(--panel);transform:translateX(-50%)}
+.tablewrap{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{font:600 10.5px var(--sans);text-transform:uppercase;letter-spacing:.07em;color:var(--muted);text-align:right;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid var(--soft);text-align:right;font-family:var(--mono);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+th.l,td.l{text-align:left}
+td.txt{font-family:var(--sans);white-space:normal;min-width:170px}
+td .tk{font-size:14px}
+.pos{color:var(--good)}.neg{color:var(--bad)}.mut{color:var(--muted)}
+.chk{font-family:var(--sans);font-size:12.5px;white-space:nowrap}
+.chk span{margin-right:8px}
+.empty{background:var(--panel);border:1px dashed var(--line);border-radius:6px;padding:14px 16px;color:var(--muted);font-size:14px}
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+.filters button{font:600 12px var(--sans);padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted);cursor:pointer}
+.filters button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+details.model{background:var(--panel);border:1px solid var(--line);border-radius:6px;margin:8px 0}
+details.model summary{cursor:pointer;padding:10px 14px;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;list-style:none}
+details.model summary::-webkit-details-marker{display:none}
+details.model summary::before{content:"+";font:600 15px var(--mono);color:var(--muted);width:10px}
+details.model[open] summary::before{content:"−"}
+.mname{font-weight:600;flex:1 1 240px}
+.mstat{font:13px var(--mono);color:var(--muted)}
+.mbody{padding:0 14px 14px}
+.mbody p{margin:4px 0 10px;font-size:13px;color:var(--muted);max-width:90ch}
+.mbody .tablewrap{border-color:var(--soft)}
+footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+footer h4{margin:14px 0 4px;color:var(--ink);font-size:13px}
+footer ul{margin:0;padding-left:18px}
+a{color:var(--accent)}
+@media (max-width:520px){.grid4{grid-template-columns:repeat(2,1fr)}.cards{grid-template-columns:1fr}.acct{text-align:left}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <h1>Markets: setups board<small>Rule-based setups with entry, stop and targets. Research and paper trading, not advice.</small></h1>
+    <label class="acct">Account size, for 1% risk sizing<br>$ <input id="acct" inputmode="numeric" value="10000" aria-label="Account size in dollars"></label>
+  </header>
+  <div class="strip" id="strip"></div>
+  <div id="banners"></div>
+  <main id="main"></main>
+  <footer>
+    <h4>How to read this</h4>
+    <ul>
+      <li><b>Signal</b>: the rule fired on the last completed daily candle. The backtest buys at the next session's open, so the entry shown (that candle's close) is an estimate; size from the actual fill.</li>
+      <li><b>Buy limit</b>: a resting limit order for the next session only. Unfilled orders are re-evaluated the next day.</li>
+      <li><b>In the zone</b>: price is inside the rule's buying zone but the entry condition has not happened. Not a signal.</li>
+      <li><b>Forming</b>: would be a signal if today's candle closed at the latest price. Never act on an unfinished daily candle.</li>
+      <li>R = entry − stop. "Gap vs random" is the rule's backtest expectancy minus its random-entry control. A rule has to beat the control, not zero.</li>
+    </ul>
+    <h4>Risk rules</h4>
+    <ul>
+      <li>Risk 1% of the account per trade: shares = account × 1% ÷ (entry − stop).</li>
+      <li>At most 5 open positions, no more than 2 in one sector. Stops only move up.</li>
+    </ul>
+    <h4>Known limits</h4>
+    <ul>
+      <li>Prices come from the scheduled scan (every 30 minutes in the session), not a streaming feed, and are delayed.</li>
+      <li>Backtests use today's stock lists for all history (survivorship bias). 34 rules were tried; the best of many looks good partly by luck.</li>
+      <li>No earnings-date or sector filter is applied here.</li>
+    </ul>
+    <p>Source, rules and every experiment: <a href="https://github.com/rhyman7/Markets">github.com/rhyman7/Markets</a> · <a href="https://github.com/rhyman7/Markets/blob/main/research/log.md">research log</a>. Education and research only, not financial advice.</p>
+  </footer>
+</div>
+<script>
+"use strict";
+let DATA = /*__DATA__*/null;
+let family = "all";
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const f2 = x => x == null ? "—" : Number(x).toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const sR = (x, d = 2) => x == null ? "—" : (x > 0 ? "+" : x < 0 ? "−" : "") + Math.abs(x).toFixed(d) + "R";
+const cls = x => x == null ? "" : x > 0 ? "pos" : x < 0 ? "neg" : "";
+const pct = (a, b) => (a == null || b == null || !b) ? "" : ((a / b - 1) * 100 >= 0 ? "+" : "−") + Math.abs((a / b - 1) * 100).toFixed(1) + "%";
+const day = s => s ? new Date(s + "T12:00:00").toLocaleDateString("en-US", {weekday: "short", month: "short", day: "numeric"}) : "—";
+const uni = u => ({universe: "Large cap", universe_midcap: "Mid cap", universe_smallcap: "Small cap"}[u] || u || "");
+function acct() { const v = parseFloat(String($("acct").value).replace(/[^0-9.]/g, "")); return v > 0 ? v : 0; }
+function size(r) {
+  const risk = r.entry - r.stop, a = acct();
+  if (!(risk > 0) || !a) return null;
+  const sh = Math.floor(a * 0.01 / risk);
+  return {sh, risk$: sh * risk, pos$: sh * r.entry, over: sh * r.entry > a};
+}
+function sizeText(r) {
+  const s = size(r);
+  if (!s) return "";
+  if (s.sh < 1) return "1% risk buys less than 1 share at this stop distance";
+  return `<b>${s.sh.toLocaleString("en-US")}</b> shares · risk <b>$${f2(s.risk$)}</b> · position $${f2(s.pos$)}` + (s.over ? ` <span class="badge b-warn">more than the account</span>` : "");
+}
+function ladder(r) {
+  const pts = [r.stop, r.entry, r.t1, r.t2, r.live].filter(v => v != null);
+  const lo = Math.min(...pts), hi = Math.max(...pts), span = hi - lo || 1;
+  const x = v => ((v - lo) / span * 100).toFixed(2) + "%", w = (a, b) => ((b - a) / span * 100).toFixed(2) + "%";
+  const ticks = [["STOP", r.stop], ["ENTRY", r.entry], ["T1", r.t1]].concat(r.t2 > r.t1 ? [["T2", r.t2]] : []);
+  return `<div class="ladder" role="img" aria-label="Stop ${f2(r.stop)}, entry ${f2(r.entry)}, target one ${f2(r.t1)}, target two ${f2(r.t2)}, latest ${f2(r.live)}">
+    <div class="track"><div class="seg risk" style="left:${x(r.stop)};width:${w(r.stop, r.entry)}"></div><div class="seg r1" style="left:${x(r.entry)};width:${w(r.entry, r.t1)}"></div>${r.t2 > r.t1 ? `<div class="seg r2" style="left:${x(r.t1)};width:${w(r.t1, r.t2)}"></div>` : ""}</div>
+    ${ticks.map(([n, v]) => `<div class="tick" style="left:${x(v)}">${n}</div>`).join("")}
+    ${r.live != null ? `<div class="dot" style="left:${x(r.live)}" title="Latest ${f2(r.live)}"></div>` : ""}</div>`;
+}
+function card(r) {
+  const forming = r.status === "forming", limit = r.status === "limit";
+  const action = forming ? "Not a signal yet. Counts only if today's candle closes like this."
+    : limit ? `Buy limit at ${f2(r.limit)} for the next session`
+    : `Buy at the next session's open after ${day(r.bar)}`;
+  return `<div class="card ${forming ? "forming" : ""}">
+    <div class="hd"><div><span class="tk">${esc(r.ticker)}</span> <span class="sub">${esc(uni(r.universe))}</span>${forming ? ` <span class="badge b-warn">forming</span>` : ""}</div>
+      <div class="live">${f2(r.live)}<div class="sub">latest · ${pct(r.live, r.entry)} vs entry</div></div></div>
+    <div class="action">${action}</div><div class="sub">${esc(r.notes)}</div>
+    ${ladder(r)}
+    <div class="grid4">
+      <div><div class="k">${limit ? "Limit" : "Entry ≈"}</div><div class="v">${f2(r.entry)}</div><div class="s">${forming ? "latest price" : limit ? "resting order" : "signal close"}</div></div>
+      <div><div class="k">Stop</div><div class="v">${f2(r.stop)}</div><div class="s">−${r.risk_pct ?? "—"}%</div></div>
+      <div><div class="k">Target 1</div><div class="v">${f2(r.t1)}</div><div class="s">${sR(r.rr1, 1)}</div></div>
+      <div><div class="k">Target 2</div><div class="v">${f2(r.t2)}</div><div class="s">${sR(r.rr2, 1)}</div></div>
+    </div>
+    <div class="size">${sizeText(r) || "Enter an account size to see shares"}</div></div>`;
+}
+const chk = (ok, label) => `<span class="${ok ? "pos" : "mut"}">${ok ? "✓" : "○"} ${label}</span>`;
+function watchTable(rows) {
+  return `<div class="tablewrap"><table><thead><tr><th class="l">Ticker</th><th>Latest</th><th>Buy zone (61.8–38.2%)</th><th>Depth</th><th class="l">Still needed</th><th>Stop if it fires</th><th>T1</th><th>T2</th><th>Risk</th></tr></thead><tbody>${rows.map(r => `<tr>
+    <td class="l"><span class="tk">${esc(r.ticker)}</span> <span class="sub">${esc(uni(r.universe))}</span></td><td>${f2(r.live)}</td>
+    <td>${f2(r.zone_bot)} – ${f2(r.zone_top)}</td><td>${r.depth_pct ?? "—"}%</td>
+    <td class="l chk">${r.checks ? chk(r.checks.rsi_below_40_in_pullback, "RSI < 40 in pullback") + chk(r.checks.rsi_rising, "RSI rising") + chk(r.checks.reversal_candle, "reversal candle") : esc(r.waiting)}</td>
+    <td>${f2(r.stop)}</td><td>${f2(r.t1)}</td><td>${f2(r.t2)}</td><td>${r.risk_pct ?? "—"}%</td></tr>`).join("")}</tbody></table></div>`;
+}
+function trackerTable(rows) {
+  const st = r => r.state === "closed" ? `<span class="${cls(r.r)}">${esc(r.text)}</span>` : r.state === "open" ? esc(r.text) : `<span class="mut">${esc(r.text)}</span>`;
+  return `<div class="tablewrap"><table><thead><tr><th class="l">Signal</th><th class="l">Ticker</th><th class="l">Status</th><th>Entry</th><th>Latest</th><th>Stop now</th><th>T1</th><th>T2</th><th>Result</th><th>Days left</th><th class="l">Taken</th></tr></thead><tbody>${rows.map(r => `<tr>
+    <td class="l">${day(r.date)}</td><td class="l"><span class="tk">${esc(r.ticker)}</span></td><td class="l txt">${st(r)}</td>
+    <td>${f2(r.entry)}</td><td>${f2(r.state === "closed" ? r.exit : r.live)}</td><td>${f2(r.state === "open" ? r.stop_now : r.stop)}</td><td>${f2(r.t1)}${r.t1_hit ? " ✓" : ""}</td><td>${f2(r.t2)}</td>
+    <td class="${cls(r.r)}">${sR(r.r)}</td><td>${r.state === "open" ? r.bars_left : "—"}</td><td class="l">${esc(r.taken || "—")}</td></tr>`).join("")}</tbody></table></div>`;
+}
+function setupTable(rows) {
+  const near = r => r.status === "limit" && r.live ? Math.abs(r.live - r.limit) / r.live : -1;
+  rows = rows.slice().sort((a, c) => (a.status === "limit") - (c.status === "limit") || near(a) - near(c));
+  const what = r => r.status === "signal" ? "Buy next open" : r.status === "limit" ? `Buy limit ${f2(r.limit)}` : `Watch: ${esc(r.waiting || "")}`;
+  return `<div class="tablewrap"><table><thead><tr><th class="l">Ticker</th><th class="l">Order</th><th>Latest</th><th>Entry</th><th>Stop</th><th>T1</th><th>T2</th><th>Risk</th><th>R:R</th><th>Shares @1%</th></tr></thead><tbody>${rows.map(r => { const s = size(r); return `<tr>
+    <td class="l"><span class="tk">${esc(r.ticker)}</span> <span class="sub">${esc(uni(r.universe))}</span></td><td class="l txt">${what(r)}</td><td>${f2(r.live)}</td><td>${f2(r.entry)}</td><td>${f2(r.stop)}</td>
+    <td>${f2(r.t1)}</td><td>${r.t2 > r.t1 ? f2(r.t2) : "—"}</td><td>${r.risk_pct ?? "—"}%</td><td>${r.rr2 ?? "—"}</td><td>${s && s.sh >= 1 ? s.sh.toLocaleString("en-US") : "—"}</td></tr>`; }).join("")}</tbody></table></div>`;
+}
+const badge = v => `<span class="badge ${v === "passed" ? "b-passed" : v === "worse than random" ? "b-worse" : "b-noedge"}">${v === "passed" ? "passed on fresh stocks" : v === "no edge" ? "no edge vs random" : esc(v)}</span>`;
+
+function render() {
+  const d = DATA;
+  if (!d) { $("main").innerHTML = `<div class="empty">No data yet. The Dashboard workflow has not produced a scan.</div>`; return; }
+  const gen = new Date(d.generated_at), age = Math.round((Date.now() - gen) / 60000);
+  const genText = gen.toLocaleString("en-US", {timeZone: "America/New_York", weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit"}) + " ET";
+  const nScan = Object.values(d.scanned || {}).reduce((a, b) => a + b, 0);
+  $("strip").innerHTML = `<span>Signals from daily candles through <b>${day(d.data_through)}</b></span><span>Latest prices: scan of <b>${genText}</b>, ${esc(d.price_delay)}</span><span>${nScan} stocks scanned</span><span>${age < 1 ? "Just built" : age < 120 ? `Built ${age} min ago` : `Built ${Math.round(age / 60)} h ago`}</span>`;
+  let b = "";
+  if (d.session_unfinished) b += `<div class="banner"><b>Session in progress.</b> Every signal below comes from the last completed candle (${day(d.data_through)}). Latest prices only show where each stock is now. Nothing new is confirmed until today's close.</div>`;
+  if ((d.failed || []).length) b += `<div class="banner bad"><b>${d.failed.length} tickers did not load</b> in this scan, so setups in them are missing: ${esc(d.failed.slice(0, 12).join(", "))}${d.failed.length > 12 ? " …" : ""}</div>`;
+  if ((d.stale || []).length) b += `<div class="banner">${d.stale.length} tickers have no bar for ${day(d.data_through)} and were scanned on older data: ${esc(d.stale.slice(0, 12).join(", "))}${d.stale.length > 12 ? " …" : ""}</div>`;
+  $("banners").innerHTML = b;
+
+  const models = Object.fromEntries(d.models.map(m => [m.key, m])), P = models[d.primary];
+  const by = k => d.rows.filter(r => r.model === k);
+  const pr = by(d.primary), sig = pr.filter(r => r.status === "signal"), frm = pr.filter(r => r.status === "forming"), wat = pr.filter(r => r.status === "watch");
+  wat.sort((a, c) => (c.checks.rsi_below_40_in_pullback + c.checks.rsi_rising) - (a.checks.rsi_below_40_in_pullback + a.checks.rsi_rising) || a.ticker.localeCompare(c.ticker));
+  let h = `<section id="variant-i"><h2>Variant I ${badge(P.verdict)} <span class="badge b-warn">paper trading only</span></h2>
+    <p class="lede">${esc(P.label.replace(/^Variant I: r/, "R"))}. ${esc(P.exit)}</p>
+    <div class="evidence">
+      <div><div class="k">Backtest, per trade</div><div class="v pos">${sR(P.exp_r)}</div><div class="s">after costs</div></div>
+      <div><div class="k">Random control</div><div class="v">${sR(P.ctl_r)}</div><div class="s">same uptrends</div></div>
+      <div><div class="k">Trades</div><div class="v">${P.trades}</div><div class="s">${esc(P.tested_on)}</div></div>
+      <div><div class="k">Rules tried</div><div class="v">${d.rules_tried}</div><div class="s">this is the 1 that passed</div></div>
+    </div><p class="lede">${esc(P.note)}</p>
+    <h3>Signals · buy at the next open <span class="n">(${sig.length})</span></h3>
+    ${sig.length ? `<div class="cards">${sig.map(card).join("")}</div>` : `<div class="empty">No variant I signal on the ${day(d.data_through)} candle. Most days have none: the backtest averaged about 40 mid-cap trades a year.</div>`}`;
+  if (d.session_unfinished) h += `<h3>Forming today · unconfirmed <span class="n">(${frm.length})</span></h3>${frm.length ? `<div class="cards">${frm.map(card).join("")}</div>` : `<div class="empty">Nothing would fire if today's candles closed at the latest prices.</div>`}`;
+  h += `<h3>In the buy zone, waiting for confirmation <span class="n">(${wat.length})</span></h3>
+    ${wat.length ? watchTable(wat) : `<div class="empty">No stock in an uptrend is sitting in its 38.2–61.8% retracement zone.</div>`}
+    <h3>Forward test · every logged signal <span class="n">(${d.tracker.length})</span></h3>
+    ${d.tracker.length ? trackerTable(d.tracker) + `<p class="lede" style="font-size:12.5px">Replayed with the backtest's rules from the next open, before costs, whether or not the trade was taken. Mark <code>taken</code> in journal/signals.csv.</p>` : `<div class="empty">No signals logged yet in journal/signals.csv.</div>`}</section>`;
+
+  const others = d.models.filter(m => m.key !== d.primary), fams = [["all", "All"], ["fib", "Fibonacci"], ["ict", "ICT"], ["wyckoff", "Wyckoff"], ["breakout", "Breakout / momentum"]];
+  const shown = others.filter(m => family === "all" || m.family === family);
+  const withRows = shown.filter(m => by(m.key).length), none = shown.filter(m => !by(m.key).length);
+  h += `<section id="research"><h2>Rules that failed their test <span class="badge b-noedge">research only</span></h2>
+    <p class="lede">These ${others.length} rules did not beat random entries with the same filters, stops and exits. Their setups are listed because the levels are real, but there is no evidence that buying them is better than buying at random. ${others.filter(m => m.verdict === "worse than random").length} were clearly worse than random.</p>
+    <div class="filters">${fams.map(([k, l]) => `<button data-fam="${k}" aria-pressed="${family === k}">${l}</button>`).join("")}</div>
+    ${withRows.map(m => { const rows = by(m.key); return `<details class="model"><summary><span class="mname">${esc(m.label)}</span>${badge(m.verdict)}<span class="mstat">gap vs random <span class="${cls(m.gap)}">${sR(m.gap, 3)}</span>${m.z != null ? ` · z ${m.z > 0 ? "+" : ""}${m.z}` : ""} · ${m.trades.toLocaleString("en-US")} trades</span><span class="mstat"><b>${rows.length}</b> setup${rows.length === 1 ? "" : "s"}</span></summary>
+      <div class="mbody"><p>Backtest ${sR(m.exp_r, 3)} per trade vs ${sR(m.ctl_r, 3)} for its random control (${esc(m.tested_on)}). ${esc(m.note)} Scanned on ${esc(m.scanned_on)}. Exit: ${esc(m.exit)}</p>${setupTable(rows)}</div></details>`; }).join("") || `<div class="empty">No setups from these rules on the ${day(d.data_through)} candle.</div>`}
+    ${none.length ? `<p class="lede" style="font-size:13px;margin-top:12px">No setups today: ${none.map(m => esc(m.label.replace(/ \(.*\)$/, ""))).join(" · ")}</p>` : ""}</section>`;
+  const open = new Set([...document.querySelectorAll("details.model[open] .mname")].map(e => e.textContent));
+  $("main").innerHTML = h;
+  document.querySelectorAll("details.model").forEach(e => { if (open.has(e.querySelector(".mname").textContent)) e.open = true; });
+  document.querySelectorAll(".filters button").forEach(btn => btn.onclick = () => { family = btn.dataset.fam; render(); });
+}
+try { const a = localStorage.getItem("markets.acct"); if (a) $("acct").value = a; } catch (e) {}
+$("acct").addEventListener("input", () => { try { localStorage.setItem("markets.acct", $("acct").value); } catch (e) {} render(); });
+render();
+if (location.protocol.startsWith("http")) {
+  const pull = () => fetch("data.json?t=" + Date.now(), {cache: "no-store"}).then(r => r.ok ? r.json() : null).then(j => { if (j && j.generated_at !== (DATA || {}).generated_at) { DATA = j; } render(); }).catch(() => render());
+  setInterval(pull, 5 * 60 * 1000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) pull(); });
+}
+</script>
+</body>
+</html>

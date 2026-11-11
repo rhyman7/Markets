@@ -2,6 +2,19 @@
 
 Newest first. Record every experiment, including the ones that didn't work.
 
+## 2026-11-11 — Dashboard added (no experiment, no rule changes)
+
+`dashboard.py` + the Dashboard workflow publish a page of current setups for the 33 rules that
+can be scanned as written (5 Fibonacci, 25 FibAlgo, 3 breakout/momentum; variants H and J are
+built from `TextbookParams`).
+Variant I is shown first; the rest are labelled with their backtest gap vs control from the
+entries below. No rule or parameter changed. `fib_textbook` now also reports the pullback's
+RSI readings in `Setup.levels` (used for the watch list, not by any rule); all tests pass,
+including a new one that the dashboard's signal replay matches the backtester trade for trade
+and that no row changes when today's unfinished bar is added.
+Not tested on real data from Claude's sandbox (market data is unreachable there): the first
+workflow run is the check.
+
 ## 2026-11-10 — Results: variant I with costs, breakout/momentum screen
 
 Both at 5 bps per side, Alpaca data through 2026-11-09, split 2021-01-01.
