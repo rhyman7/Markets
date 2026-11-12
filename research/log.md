@@ -2,9 +2,51 @@
 
 Newest first. Record every experiment, including the ones that didn't work.
 
+## 2026-11-12 — Results: variant I on Robinhood's crypto list
+
+Plan and pass rules: next entry down (written before these runs). Coinbase daily bars (UTC
+days) through 2026-11-11, split 2023-01-01. 77 of 89 coins had enough data. Left out: not on
+Coinbase in USD (CC, CASHCAT, MEW, GRAM, LIT, MNT, XDC) or under 251 bars (BILL, MEGA, RE,
+CHIP, VIRTUAL).
+Runs: https://github.com/rhyman7/Markets/actions/runs/43220486270 (95 bps),
+https://github.com/rhyman7/Markets/actions/runs/43220502873 (5 bps).
+
+| Costs/side | Variant | Trades | Exp R | Before 2023 | 2023–26 | PF | Max DD |
+|---|---|---|---|---|---|---|---|
+| 95 bps | I | 132 | −0.180 | −0.017 (26) | −0.220 (106) | 0.69 | 37R |
+| 95 bps | M matched control (22.5% stop) | 452 | −0.167 | +0.081 | −0.278 | 0.69 | 100R |
+| 95 bps | F stock control (5% stop) | 697 | −0.450 | −0.392 | −0.475 | 0.40 | 314R |
+| 5 bps | I | 132 | −0.091 | +0.066 | −0.129 | 0.83 | 31R |
+| 5 bps | M | 452 | −0.087 | +0.163 | −0.200 | 0.83 | 83R |
+| 5 bps | F | 697 | −0.090 | −0.032 | −0.116 | 0.84 | 76R |
+
+Gap I − M: **−0.013R, z −0.1** at 95 bps (before 2023 −0.098R, after +0.058R); −0.003R at 5 bps.
+**RESULT: FAIL.** The claim that Fibonacci works better on crypto than on stocks is not supported.
+
+- Variant I lost money on these coins and so did random entries in the same uptrends, by the
+  same amount. The Fibonacci entry added nothing. On mid-cap stocks the gap was +0.175R.
+- It lost even before realistic costs (−0.09R at 5 bps). Robinhood-level costs took another
+  0.09R per trade off I, and 0.36R off the 5%-stop control.
+- Win rate 37%; 59 of 132 trades hit the full stop. I by year at 95 bps: 2021 +0.48 (11 trades),
+  2023 −0.05 (18), 2024 −0.02 (51), 2025 −0.50 (29), 2026 −0.88 (8). No year with 20+ trades
+  was positive.
+- Only 132 trades over 50 coins, 26 of them before 2023, so the split comparison is noise.
+  The estimate is loose (standard error of the gap about 0.11R): a small real edge can't be
+  ruled out, but an edge bigger than the mid-cap one is unlikely, and survivorship bias
+  pushes these numbers up, not down.
+- Even "buy coins in uptrends at random" lost since 2023 on this list, despite the list being
+  made of today's survivors. A long-only daily pullback approach on these coins has had no
+  tailwind to lean on.
+
+Decision, per the plan: crypto does not go on the paper-trading list, and no other Fibonacci
+variants get tried on crypto to find one that works. The Coinbase loader, universe and
+`fib_crypto` experiment stay in the repo for any future, different idea.
+
+Rule/universe count on this repo: 35 tried, 1 confirmed on fresh stocks (variant I, mid-caps).
+
 ## 2026-11-12 — Variant I on Robinhood's crypto list: plan (written before running)
 
-**NOT RUN YET.** Code and tests are in place; no real crypto prices have been seen.
+Results: entry above. This plan was committed (10ec68b) before any real crypto prices were loaded.
 
 **Claim under test (Ryan's):** Fibonacci entries should work better on crypto than on stocks.
 **What the run can show:** whether variant I beats random entries in the same crypto uptrends,

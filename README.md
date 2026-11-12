@@ -143,7 +143,8 @@ matched controls as the FibAlgo screen. Run Experiment → `breakout_screen`.
 (`BTC-USD`). Any ticker ending in `-USD` is loaded from Coinbase's public daily candles (no
 key; UTC days; volume is in dollars). Run Experiment → `fib_crypto` with split `2023-01-01`
 and `cost_bps` 95. It runs variant I against a matched random control; the plan and pass
-rules are in `research/log.md`. The daily scan and dashboard do not cover crypto.
+rules are in `research/log.md`. Result (2026-11-12): failed, no better than random entries and
+losing money after costs. The daily scan and dashboard do not cover crypto.
 
 ## Layout
 
