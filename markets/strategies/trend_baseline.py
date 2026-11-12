@@ -20,8 +20,10 @@ class TrendBaseline(Strategy):
     min_bars = 220
 
     def __init__(self, entry_rate: float = 0.05, stop_pct: float = 0.05,
-                 t1_pct: float = 0.05, t2_pct: float = 0.10):
+                 t1_pct: float = 0.05, t2_pct: float = 0.10,
+                 min_price: float = 10.0, min_avg_volume: float = 1_000_000):
         self.entry_rate, self.stop_pct, self.t1_pct, self.t2_pct = entry_rate, stop_pct, t1_pct, t2_pct
+        self.min_price, self.min_avg_volume = min_price, min_avg_volume
 
     def prepare(self, df: pd.DataFrame) -> pd.DataFrame:
         df = df.copy()
@@ -34,7 +36,7 @@ class TrendBaseline(Strategy):
         if i < self.min_bars:
             return None
         px, ma50, ma200 = df["close"].iat[i], df["ma50"].iat[i], df["ma200"].iat[i]
-        if px < 10 or df["vol50"].iat[i] < 1_000_000:
+        if px < self.min_price or df["vol50"].iat[i] < self.min_avg_volume:
             return None
         if not (ma50 > ma200 and ma50 > df["ma50"].iat[i - 10] and px >= ma50 * 0.97):
             return None

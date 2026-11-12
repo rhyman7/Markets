@@ -83,6 +83,54 @@ def _fetch_alpaca(ticker: str, start: date) -> pd.DataFrame:
     return df[COLUMNS]
 
 
+def is_crypto(ticker: str) -> bool:
+    """Crypto pairs are written like BTC-USD (see universe_crypto.txt)."""
+    return ticker.upper().endswith("-USD")
+
+
+def _fetch_coinbase(ticker: str, start: date) -> pd.DataFrame:
+    """Daily candles for a crypto pair from Coinbase Exchange's public API (no key needed).
+
+    Bars are UTC days (00:00 to 24:00 UTC); crypto trades every day, so there are ~365 bars
+    a year. `volume` is converted to US-dollar volume (coins x close), because coin counts
+    aren't comparable between a $100,000 coin and a $0.00001 coin. Today's unfinished UTC
+    bar is dropped here. A pair Coinbase doesn't list returns an empty frame.
+    """
+    import requests
+
+    url = f"https://api.exchange.coinbase.com/products/{ticker.upper()}/candles"
+    day = timedelta(days=1)
+    end = datetime.utcnow().date()            # today's UTC bar is unfinished: never request it
+    rows: list[list[float]] = []
+    while end > start:
+        lo = max(start, end - 299 * day)      # the API returns at most 300 candles per call
+        params = {"granularity": 86400, "start": f"{lo.isoformat()}T00:00:00Z",
+                  "end": f"{(end - day).isoformat()}T00:00:00Z"}
+        for attempt in range(5):
+            r = requests.get(url, params=params, headers={"User-Agent": "markets-research"}, timeout=30)
+            if r.status_code != 429:
+                break
+            time.sleep(2 * (attempt + 1))
+        if r.status_code == 404:              # not listed on Coinbase
+            return pd.DataFrame(columns=COLUMNS)
+        r.raise_for_status()
+        chunk = r.json()
+        if not chunk:                         # before the coin's first trade
+            break
+        rows += chunk
+        end = lo
+        time.sleep(0.12)
+    if not rows:
+        return pd.DataFrame(columns=COLUMNS)
+    df = pd.DataFrame(rows, columns=["t", "low", "high", "open", "close", "volume"])
+    df.index = pd.to_datetime(df["t"], unit="s").dt.normalize()
+    df = df[~df.index.duplicated()].sort_index()
+    df = df[df.index < pd.Timestamp(datetime.utcnow().date())]
+    df["volume"] = df["volume"] * df["close"]
+    df.index.name = None
+    return df[COLUMNS].astype(float)
+
+
 def load_bars(ticker: str, years: float = 3, refresh: bool = False) -> pd.DataFrame:
     """Daily bars for `ticker`, using the cache when it was refreshed today."""
     _load_env()
@@ -95,6 +143,8 @@ def load_bars(ticker: str, years: float = 3, refresh: bool = False) -> pd.DataFr
     start = date.today() - timedelta(days=int(365 * years) + 10)
     provider = (os.environ.get("DATA_PROVIDER") or "yfinance").lower()
     fetch = _fetch_alpaca if provider == "alpaca" else _fetch_yfinance
+    if is_crypto(ticker):
+        fetch = _fetch_coinbase               # crypto always comes from Coinbase
     df = fetch(ticker.upper(), start).dropna()
     if not df.empty:
         df.to_csv(path)

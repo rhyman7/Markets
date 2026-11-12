@@ -2,6 +2,55 @@
 
 Newest first. Record every experiment, including the ones that didn't work.
 
+## 2026-11-12 — Variant I on Robinhood's crypto list: plan (written before running)
+
+**NOT RUN YET.** Code and tests are in place; no real crypto prices have been seen.
+
+**Claim under test (Ryan's):** Fibonacci entries should work better on crypto than on stocks.
+**What the run can show:** whether variant I beats random entries in the same crypto uptrends,
+and whether that gap is larger than the +0.175R it had on mid-caps.
+
+**Universe:** `universe_crypto.txt`, the 91 assets on Robinhood's US availability page
+(read 2026-11-12) minus the two dollar stablecoins (USDC, USDG) = 89 coins.
+**Data:** Coinbase Exchange public daily candles, USD pairs, UTC days, up to 10 years. Coins
+Coinbase doesn't list, or with 250 bars or fewer, are left out and named in the output.
+(Alpaca's crypto feed covers far fewer coins; Yahoo's crypto tickers are ambiguous.)
+
+**Rules:** variant I exactly as frozen. Two forced changes, both liquidity filters that make
+no sense for coins: no $10 minimum price, and "50-day average volume >= 1M shares" becomes
+"50-day average dollar volume >= $1M on Coinbase". Nothing else changes: same uptrend filter
+(50-day > 200-day and rising), same zone, candle, RSI, stop and targets, 40-bar time stop.
+Bars are calendar days, so "200-day" is 200 calendar days, about 6.5 months instead of 9.5.
+Signal on a UTC daily close, buy at the next UTC open (7 PM or 8 PM Eastern).
+
+**Control (primary):** M, random entries (5% of days) under the same filters, stop = the
+median stop distance of I's own trades, half off at +1R, rest at +2R, same 40-bar limit. The
+stock control F (5% stop, +5%/+10%) is also printed for reference only: a 5% stop is inside
+one day's normal range for most coins, so it isn't a fair comparison here.
+
+**Costs:** 95 bps per side (Robinhood's entry-tier taker fee, and about what it keeps from the
+spread on market-maker routing). A second run at 5 bps is for comparison with the stock runs.
+
+**Split:** 2023-01-01, not 2021: most of these coins have little or no history before 2021.
+
+**Pass rules (same as the screens):** >= 100 trades, gap vs M >= +0.10R with z >= 2.0, and
+gap > 0 both before and after the split. "Better than stocks" additionally needs the gap to
+be above +0.175R; with a few hundred trades that comparison will be loose either way.
+
+**Known problems, set down beforehand:**
+- Survivorship is much worse than for stocks. Robinhood lists coins after they've become
+  popular, and dead coins are gone. This inflates every number, the control's included.
+- Many coins were listed in 2023-26 and have little history. Trades will be concentrated in
+  a couple of dozen older coins, and coins move together, so the trades are less independent
+  than the count suggests and z is overstated.
+- This is rule/universe try number 35. A pass here would need a fresh confirmation (other
+  coins, or forward signals) before it means anything.
+- If it fails, it doesn't go on the paper-trading list, and other Fibonacci variants are not
+  to be tried on crypto afterwards to find one that works.
+
+Sanity check done: on 40 synthetic random-walk "coins" with upward drift, I and M both made
+about +0.23R and the gap was +0.002R, so the comparison itself isn't biased toward I.
+
 ## 2026-11-11 — Dashboard added (no experiment, no rule changes)
 
 `dashboard.py` + the Dashboard workflow publish a page of current setups for the 33 rules that

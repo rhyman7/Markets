@@ -135,6 +135,49 @@ def run_library(name, data, split, benchmark):
     print(f"\nPASSED: {', '.join(tab.loc[tab.PASS, 'tool']) or 'none'}  ({int(tab.PASS.sum())} of {len(tab)} tested)")
 
 
+# 2026-11-12: variant I on the coins Robinhood lists (universe_crypto.txt). Plan and pass rules
+# are in research/log.md, written BEFORE the first run. Rules are variant I's, unchanged, except
+# the two stock liquidity filters: no $10 minimum price, and 50-day average DOLLAR volume
+# >= $1M (the loader returns dollar volume for crypto).
+CRYPTO_EXPERIMENTS = {"fib_crypto"}
+CRYPTO_FILTERS = dict(min_price=0.0, min_avg_volume=1_000_000)
+
+
+def run_crypto(data, split):
+    cut = pd.Timestamp(split)
+    sim = lambda make: [x for t, df in data.items() for x in simulate_ticker(make(), t, df)]
+    i_trades = sim(lambda: FibTextbookI(TextbookParams(mode="pattern", require_rsi=True, **CRYPTO_FILTERS)))
+    closed = [t for t in i_trades if not t.exit_reason.startswith("open")]
+    if not closed:
+        print("Variant I made no trades.")
+        return
+    stop = round(float(np.median([t.risk_pct for t in closed])), 3)
+    variants = [
+        ("I. reversal candle + RSI < 40 turning up", i_trades),
+        (f"M. matched control: random entries in uptrends, {stop:.1%} stop, +1R/+2R",
+         sim(lambda: TrendBaseline(stop_pct=stop, t1_pct=stop, t2_pct=2 * stop, **CRYPTO_FILTERS))),
+        ("F. stock control as written (5% stop, +5%/+10%)", sim(lambda: TrendBaseline(**CRYPTO_FILTERS))),
+    ]
+    with pd.option_context("display.width", 250, "display.max_columns", None):
+        print(pd.DataFrame([row(n, t, split) for n, t in variants]).to_string(index=False))
+        by_year(variants)
+    r, rc = _r(i_trades), _r(variants[1][1])
+    (m, se), (mc, sec) = _mean_se(r), _mean_se(rc)
+    gaps = {}
+    for label, f in (("pre", lambda x: x.entry_date < cut), ("post", lambda x: x.entry_date >= cut)):
+        a, b = _r([x for x in i_trades if f(x)]), _r([x for x in variants[1][1] if f(x)])
+        gaps[label] = (a.mean() - b.mean()) if len(a) and len(b) else np.nan
+    z = (m - mc) / np.sqrt(se ** 2 + sec ** 2) if len(r) > 1 and len(rc) > 1 else np.nan
+    ok = bool(len(r) >= SCREEN_PASS["min_trades"] and m - mc >= SCREEN_PASS["min_gap"]
+              and z >= SCREEN_PASS["min_z"] and gaps["pre"] > 0 and gaps["post"] > 0)
+    print(f"\nI vs matched control M: gap {m - mc:+.3f}R, z {z:.2f}, {len(r)} vs {len(rc)} trades; "
+          f"gap before {split} {gaps['pre']:+.3f}R, after {gaps['post']:+.3f}R")
+    print(f"Coins with at least one variant I trade: {len({t.ticker for t in closed})} of {len(data)}")
+    print(f"Pass rules: {SCREEN_PASS} and gap > 0 in both periods.  RESULT: {'PASS' if ok else 'FAIL'}")
+    print("\nBreakdown of variant I:")
+    breakdown(i_trades)
+
+
 def row(name, trades, split):
     cut = pd.Timestamp(split)
     out = {"variant": name}
@@ -179,7 +222,7 @@ def breakdown(trades):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("name", choices=list(EXPERIMENTS) + list(LIBRARY_EXPERIMENTS))
+    ap.add_argument("name", choices=list(EXPERIMENTS) + list(LIBRARY_EXPERIMENTS) + sorted(CRYPTO_EXPERIMENTS))
     ap.add_argument("--years", type=float, default=10)
     ap.add_argument("--split", default="2021-01-01")
     ap.add_argument("--tickers", nargs="*")
@@ -190,17 +233,29 @@ def main():
     import markets.backtest as bt
     bt.COST_PER_SIDE = args.cost_bps / 10_000
 
-    tickers = [t.upper() for t in args.tickers] if args.tickers else load_universe(args.universe or None)
-    data = {}
+    crypto = args.name in CRYPTO_EXPERIMENTS
+    universe = args.universe
+    if crypto and universe in (None, "", "universe.txt"):
+        universe = "universe_crypto.txt"
+    tickers = [t.upper() for t in args.tickers] if args.tickers else load_universe(universe or None)
+    data, short = {}, []
     for t in tickers:
         try:
             df = drop_unfinished_bar(load_bars(t, years=args.years))
             if len(df) > 250:
                 data[t] = df
+            else:
+                short.append(f"{t} ({len(df)})")
         except Exception as e:
             print(f"skip {t}: {type(e).__name__}")
     print(f"{args.name}: {len(data)} tickers, {args.years:g} years, split {args.split}, "
           f"costs {args.cost_bps:g} bps per side\n")
+
+    if crypto:
+        print(f"Coinbase daily bars (UTC days) through {max(df.index[-1] for df in data.values()).date()}")
+        print(f"Left out, not on Coinbase or 250 bars or fewer (bars): {', '.join(short) or 'none'}\n")
+        run_crypto(data, args.split)
+        return
 
     if args.name in LIBRARY_EXPERIMENTS:
         bench = drop_unfinished_bar(load_bars("SPY", years=args.years))["close"]

@@ -137,11 +137,20 @@ before 2026-11-10 afternoon were run without costs.
 `markets/strategies/breakout.py`: three breakout/momentum entries with the same template and
 matched controls as the FibAlgo screen. Run Experiment → `breakout_screen`.
 
+## Crypto (Robinhood's list)
+
+`universe_crypto.txt` holds the coins Robinhood lists in the US as Coinbase USD pairs
+(`BTC-USD`). Any ticker ending in `-USD` is loaded from Coinbase's public daily candles (no
+key; UTC days; volume is in dollars). Run Experiment → `fib_crypto` with split `2023-01-01`
+and `cost_bps` 95. It runs variant I against a matched random control; the plan and pass
+rules are in `research/log.md`. The daily scan and dashboard do not cover crypto.
+
 ## Layout
 
 ```
 scan.py, backtest.py        command-line tools
 universe.txt                tickers to scan
+universe_crypto.txt         Robinhood's coins (Coinbase pairs), for the fib_crypto experiment
 markets/data/loader.py      price data + cache (yfinance or Alpaca)
 markets/strategies/         one file per strategy, registered in __init__.py
 markets/backtest.py         trade simulation and stats
