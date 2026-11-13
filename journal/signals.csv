@@ -3,3 +3,4 @@ date,ticker,strategy,universe,status,close,entry,stop,t1,t2,risk_pct,notes,taken
 2026-11-09,DINO,fib_textbook_i,universe_midcap,TRIGGERED,99.76,99.76,77.15,129.37,147.31,22.7,"swing 2026-06-22 -> 2026-10-14, reversal candle in zone",
 2026-11-10,CVX,fib_textbook_i,universe,TRIGGERED,211.22,211.22,184.88,236.48,254.02,12.5,"swing 2026-07-10 -> 2026-10-30, reversal candle in zone",
 2026-11-11,DINO,fib_textbook_i,universe_midcap,TRIGGERED,101.73,101.73,77.15,129.37,147.31,24.2,"swing 2026-06-22 -> 2026-10-14, reversal candle in zone",
+2026-11-12,CRWD,fib_textbook_i,universe,TRIGGERED,229.87,229.87,186.44,286.99,321.46,18.9,"swing 2026-06-11 -> 2026-10-06, reversal candle in zone",
